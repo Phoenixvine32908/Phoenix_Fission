@@ -98,7 +98,7 @@ public class FluidInHatchCondition extends RecipeCondition {
 
             Component nameComponent = Component.literal(localizedName)
                     .withStyle(style -> style.withColor(TextColor.fromRgb(color)));
-            return Component.translatable("phoenixcore.tooltip.requires_fluid", nameComponent);
+            return Component.translatable("phoenix_fission.tooltip.requires_fluid", nameComponent);
         }
         return Component.literal("Requires an unknown fluid.");
     }

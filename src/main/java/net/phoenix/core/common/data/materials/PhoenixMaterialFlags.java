@@ -26,7 +26,7 @@ public class PhoenixMaterialFlags {
             .materialAmount(GTValues.M / 4)
             .unificationEnabled(true)
             .generateItem(true)
-            .materialIconType(PhoenixMaterialSet.nanites)
+            .materialIconType(PhoenixFissionMaterialSet.nanites)
             .generationCondition(mat -> mat.hasFlag(PhoenixMaterialFlags.GENERATE_NANITES));
 
     public static final TagPrefix crystal_rose = new TagPrefix("crystal_rose")
@@ -37,7 +37,7 @@ public class PhoenixMaterialFlags {
             .materialAmount(GTValues.M / 4)
             .unificationEnabled(true)
             .generateItem(true)
-            .materialIconType(PhoenixMaterialSet.crystal_rose)
+            .materialIconType(PhoenixFissionMaterialSet.crystal_rose)
             .generationCondition(mat -> mat.hasFlag(PhoenixMaterialFlags.GENERATE_CRYSTAL_ROSE));
 
     public static void init() {}

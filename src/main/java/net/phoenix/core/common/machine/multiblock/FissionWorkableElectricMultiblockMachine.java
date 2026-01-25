@@ -489,14 +489,14 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
         if (type.getClass().getName().contains("KjsCoolerType")) {
             return "kubejs";
         }
-        return "phoenixcore";
+        return "phoenix_fission";
     }
 
     private String getNamespaceForType(IFissionModeratorType type) {
         if (type.getClass().getName().contains("KjsModeratorType")) {
             return "kubejs";
         }
-        return "phoenixcore";
+        return "phoenix_fission";
     }
     // END NEW: Helper methods
 

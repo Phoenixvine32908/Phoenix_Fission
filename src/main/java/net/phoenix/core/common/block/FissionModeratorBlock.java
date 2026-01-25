@@ -11,8 +11,8 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.BlockGetter;
+import net.phoenix.core.PhoenixFission;
 import net.phoenix.core.api.block.IFissionModeratorType;
-import net.phoenix.core.phoenixcore;
 
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -36,23 +36,23 @@ public class FissionModeratorBlock extends ActiveBlock {
     public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip,
                                 TooltipFlag flag) {
         if (!GTUtil.isShiftDown()) {
-            tooltip.add(Component.translatable("block.phoenixcore.fission_moderator.shift"));
+            tooltip.add(Component.translatable("block.phoenix_fission.fission_moderator.shift"));
             return;
         }
 
-        tooltip.add(Component.translatable("block.phoenixcore.fission_moderator.info_header"));
+        tooltip.add(Component.translatable("block.phoenix_fission.fission_moderator.info_header"));
 
-        tooltip.add(Component.translatable("block.phoenixcore.fission_moderator.boost",
+        tooltip.add(Component.translatable("block.phoenix_fission.fission_moderator.boost",
                 this.moderatorType.getEUBoost()));
 
-        tooltip.add(Component.translatable("block.phoenixcore.fission_moderator.fuel_discount",
+        tooltip.add(Component.translatable("block.phoenix_fission.fission_moderator.fuel_discount",
                 this.moderatorType.getFuelDiscount()));
     }
 
     public enum fissionModeratorType implements StringRepresentable, IFissionModeratorType {
 
         MODERATOR_GRAPHITE("graphite_moderator", 1, 3, 1, GTMaterials.Graphite,
-                phoenixcore.id("block/fission/graphite_moderator"));
+                PhoenixFission.id("block/fission/graphite_moderator"));
 
         @NotNull
         @Getter

@@ -5,8 +5,8 @@ import com.gregtechceu.gtceu.api.blockentity.MetaMachineBlockEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.phoenix.core.PhoenixFission;
 import net.phoenix.core.common.machine.multiblock.FissionWorkableElectricMultiblockMachine;
-import net.phoenix.core.phoenixcore;
 
 import snownee.jade.api.BlockAccessor;
 import snownee.jade.api.IBlockComponentProvider;
@@ -16,7 +16,7 @@ import snownee.jade.api.config.IPluginConfig;
 
 public class FissionMachineProvider implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
 
-    public static final ResourceLocation UID = phoenixcore.id("fission_machine_info");
+    public static final ResourceLocation UID = PhoenixFission.id("fission_machine_info");
 
     @Override
     public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
@@ -32,20 +32,20 @@ public class FissionMachineProvider implements IBlockComponentProvider, IServerD
         boolean lowCooling = data.getBoolean("lowCooling");
 
         if (!hasMeltdownTimer || ticks < 0) {
-            tooltip.add(Component.translatable("jade.phoenixcore.fission_safe")
+            tooltip.add(Component.translatable("jade.PhoenixFission.fission_safe")
                     .withStyle(s -> s.withColor(0x33FF33)));
             return;
         }
 
         int seconds = ticks / 20;
-        tooltip.add(Component.translatable("jade.phoenixcore.fission_meltdown_timer", seconds)
+        tooltip.add(Component.translatable("jade.PhoenixFission.fission_meltdown_timer", seconds)
                 .withStyle(s -> s.withColor(0xFFAA00)));
 
         if (!hasCoolant) {
-            tooltip.add(Component.translatable("jade.phoenixcore.fission_no_coolant")
+            tooltip.add(Component.translatable("jade.PhoenixFission.fission_no_coolant")
                     .withStyle(s -> s.withColor(0xFF3333)));
         } else if (lowCooling) {
-            tooltip.add(Component.translatable("jade.phoenixcore.fission_low_cooling")
+            tooltip.add(Component.translatable("jade.PhoenixFission.fission_low_cooling")
                     .withStyle(s -> s.withColor(0xFF5555)));
         }
     }

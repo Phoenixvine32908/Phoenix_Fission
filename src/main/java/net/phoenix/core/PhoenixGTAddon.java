@@ -4,22 +4,11 @@ import com.gregtechceu.gtceu.api.addon.GTAddon;
 import com.gregtechceu.gtceu.api.addon.IGTAddon;
 import com.gregtechceu.gtceu.api.addon.events.KJSRecipeKeyEvent;
 import com.gregtechceu.gtceu.api.registry.registrate.GTRegistrate;
-import com.gregtechceu.gtceu.integration.kjs.recipe.components.ContentJS;
 
 import net.minecraft.data.recipes.FinishedRecipe;
-import net.phoenix.core.api.capability.PhoenixRecipeCapabilities;
-import net.phoenix.core.common.data.PhoenixCovers;
-import net.phoenix.core.common.data.PhoenixMachineRecipes;
-import net.phoenix.core.common.data.PhoenixToolRecipes;
-import net.phoenix.core.common.data.materials.PhoenixElements;
-import net.phoenix.core.common.data.recipe.generated.CrystalRoseAssemblerGenerator;
-import net.phoenix.core.common.data.recipe.generated.PhoenixBeeRecipeGenerator;
-import net.phoenix.core.common.machine.multiblock.Shield;
-import net.phoenix.core.integration.kubejs.recipe.ShieldComponent;
+import net.phoenix.core.common.data.PhoenixFissionMachineRecipes;
+import net.phoenix.core.common.data.materials.PhoenixFissionElements;
 
-import com.mojang.datafixers.util.Pair;
-
-import java.awt.*;
 import java.util.function.Consumer;
 
 @SuppressWarnings("unused")
@@ -28,17 +17,15 @@ public class PhoenixGTAddon implements IGTAddon {
 
     @Override
     public GTRegistrate getRegistrate() {
-        return phoenixcore.PHOENIX_REGISTRATE;
+        return PhoenixFission.PHOENIX_REGISTRATE;
     }
 
     @Override
-    public void initializeAddon() {
-        PhoenixCovers.init();
-    }
+    public void initializeAddon() {}
 
     @Override
     public String addonModId() {
-        return phoenixcore.MOD_ID;
+        return PhoenixFission.MOD_ID;
     }
 
     @Override
@@ -46,31 +33,18 @@ public class PhoenixGTAddon implements IGTAddon {
 
     @Override
     public void addRecipes(Consumer<FinishedRecipe> provider) {
-        PhoenixMachineRecipes.init(provider);
-        PhoenixToolRecipes.init(provider);
-        PhoenixBeeRecipeGenerator.loadBeeRecipes(provider);
-        CrystalRoseAssemblerGenerator.generateCrystalRoseRecipes(provider);
+        PhoenixFissionMachineRecipes.init(provider);
     }
 
     @Override
     public void registerElements() {
         IGTAddon.super.registerElements();
-        PhoenixElements.init();
+        PhoenixFissionElements.init();
     }
 
     @Override
-    public void registerRecipeCapabilities() {
-        PhoenixRecipeCapabilities.init();
-    }
-
-    public static final ShieldComponent SHIELD_COMPONENT = new ShieldComponent();
-    public static final ContentJS<Shield.ShieldTypes> SHIELD_IN = new ContentJS<>(SHIELD_COMPONENT,
-            PhoenixRecipeCapabilities.SHIELDTYPES, true);
-    public static final ContentJS<Shield.ShieldTypes> SHIELD_OUT = new ContentJS<>(SHIELD_COMPONENT,
-            PhoenixRecipeCapabilities.SHIELDTYPES, false);
+    public void registerRecipeCapabilities() {}
 
     @Override
-    public void registerRecipeKeys(KJSRecipeKeyEvent event) {
-        event.registerKey(PhoenixRecipeCapabilities.SHIELDTYPES, Pair.of(SHIELD_IN, SHIELD_OUT));
-    }
+    public void registerRecipeKeys(KJSRecipeKeyEvent event) {}
 }

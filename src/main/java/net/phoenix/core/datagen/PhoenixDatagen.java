@@ -4,7 +4,7 @@ import net.phoenix.core.datagen.lang.PhoenixLangHandler;
 
 import com.tterrag.registrate.providers.ProviderType;
 
-import static net.phoenix.core.common.registry.PhoenixRegistration.REGISTRATE;
+import static net.phoenix.core.common.registry.PhoenixFissionRegistration.REGISTRATE;
 
 public class PhoenixDatagen {
 

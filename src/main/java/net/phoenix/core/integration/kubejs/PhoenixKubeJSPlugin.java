@@ -2,20 +2,18 @@ package net.phoenix.core.integration.kubejs;
 
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 
-import net.phoenix.core.client.renderer.machine.multiblock.PhoenixDynamicRenderHelpers;
-import net.phoenix.core.common.block.PhoenixBlocks;
-import net.phoenix.core.common.data.PhoenixRecipeTypes;
-import net.phoenix.core.common.data.item.PhoenixItems;
-import net.phoenix.core.common.data.materials.PhoenixElements;
-import net.phoenix.core.common.data.materials.PhoenixMaterials;
-import net.phoenix.core.common.data.materials.PhoenixOres;
-import net.phoenix.core.common.machine.PhoenixMachines;
+import net.phoenix.core.PhoenixFission;
+import net.phoenix.core.common.block.PhoenixFissionBlocks;
+import net.phoenix.core.common.data.PhoenixFissionRecipeTypes;
+import net.phoenix.core.common.data.item.PhoenixFissionItems;
+import net.phoenix.core.common.data.materials.PhoenixFissionElements;
+import net.phoenix.core.common.data.materials.PhoenixFissionMaterials;
+import net.phoenix.core.common.machine.PhoenixFissionMachines;
 import net.phoenix.core.common.machine.multiblock.*;
 import net.phoenix.core.configs.PhoenixConfigs;
 import net.phoenix.core.integration.kubejs.builders.FissionCoolerBlockBuilder;
 import net.phoenix.core.integration.kubejs.builders.FissionModeratorBlockBuilder;
 import net.phoenix.core.integration.kubejs.recipe.PhoenixRecipeSchema;
-import net.phoenix.core.phoenixcore;
 
 import dev.latvian.mods.kubejs.KubeJSPlugin;
 import dev.latvian.mods.kubejs.recipe.schema.RegisterRecipeSchemasEvent;
@@ -35,12 +33,12 @@ public class PhoenixKubeJSPlugin extends KubeJSPlugin {
     public void init() {
         super.init();
         RegistryInfo.BLOCK.addType(
-                phoenixcore.MOD_ID + ":fission_cooler",
+                PhoenixFission.MOD_ID + ":fission_cooler",
                 FissionCoolerBlockBuilder.class,
                 FissionCoolerBlockBuilder::new);
 
         RegistryInfo.BLOCK.addType(
-                phoenixcore.MOD_ID + ":fission_moderator",
+                PhoenixFission.MOD_ID + ":fission_moderator",
                 FissionModeratorBlockBuilder.class,
                 FissionModeratorBlockBuilder::new);
     }
@@ -61,22 +59,16 @@ public class PhoenixKubeJSPlugin extends KubeJSPlugin {
     @Override
     public void registerBindings(BindingsEvent event) {
         super.registerBindings(event);
-        event.add("ShieldType", Shield.ShieldTypes.class);
-        event.add("PhoenixMaterials", PhoenixMaterials.class);
-        event.add("PhoenixOres", PhoenixOres.class);
+        event.add("PhoenixFissionMaterials", PhoenixFissionMaterials.class);
         event.add("PhoenixConfigs", PhoenixConfigs.class);
-        event.add("BlazingCleanroom", BlazingCleanroom.class);
-        event.add("PhoenixElements", PhoenixElements.class);
-        event.add("PhoenixBlocks", PhoenixBlocks.class);
-        event.add("PhoenixMachines", PhoenixMachines.class);
-        event.add("PhoenixResearchMachines", PhoenixMachines.class);
-        event.add("CreativeEnergyMultiMachine", CreativeEnergyMultiMachine.class);
-        event.add("PhoenixItems", PhoenixItems.class);
-        event.add("PhoenixRecipeTypes", PhoenixRecipeTypes.class);
+        event.add("PhoenixFissionElements", PhoenixFissionElements.class);
+        event.add("PhoenixFissionBlocks", PhoenixFissionBlocks.class);
+        event.add("PhoenixFissionMachines", PhoenixFissionMachines.class);
+        event.add("PhoenixResearchMachines", PhoenixFissionMachines.class);
+        event.add("PhoenixFissionItems", PhoenixFissionItems.class);
+        event.add("PhoenixFissionRecipeTypes", PhoenixFissionRecipeTypes.class);
         event.add("FissionWorkableElectricMultiblockMachine", FissionWorkableElectricMultiblockMachine.class);
         event.add("FissionSteamMultiblockMachine", FissionSteamMultiblockMachine.class);
-
-        event.add("PhoenixDynamicRenderHelpers", PhoenixDynamicRenderHelpers.class);
-        event.add("PhoenixCore", phoenixcore.class);
+        event.add("PhoenixFission", PhoenixFission.class);
     }
 }

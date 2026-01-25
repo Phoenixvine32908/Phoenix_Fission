@@ -13,8 +13,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraftforge.fluids.FluidStack;
+import net.phoenix.core.PhoenixFission;
 import net.phoenix.core.api.block.IFissionCoolerType;
-import net.phoenix.core.phoenixcore;
 
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,7 @@ public class FissionCoolerBlock extends ActiveBlock {
         Component coolantName = getCoolantName(coolant);
 
         if (!GTUtil.isShiftDown()) {
-            tooltip.add(Component.translatable("block.phoenixcore.fission_cooler.shift"));
+            tooltip.add(Component.translatable("block.phoenix_fission.fission_cooler.shift"));
             return;
         }
         tooltip.add(Component.translatable("phoenix.fission.coolant_required", coolantName));
@@ -74,7 +74,7 @@ public class FissionCoolerBlock extends ActiveBlock {
                 105, 1, 100,
                 "gtceu:distilled_water",
                 GTMaterials.Steel,
-                phoenixcore.id("block/fission/basic_cooler_block"));
+                PhoenixFission.id("block/fission/basic_cooler_block"));
 
         @Getter
         @NotNull
