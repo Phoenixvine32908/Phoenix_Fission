@@ -1,0 +1,19 @@
+site_name: Phoenix's Fission Wiki
+theme:
+  name: material
+  palette:
+    primary: deep orange
+    accent: orange
+  features:
+    - navigation.tabs
+    - navigation.sections
+
+nav:
+  - Home: index.md
+  - Gameplay Guide: gameplay.md
+  - KubeJS Integration: kubejs.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences

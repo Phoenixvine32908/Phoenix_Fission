@@ -1,6 +1,8 @@
 {
   "values": [
     "phoenix_fission:basic_cooler",
-    "phoenix_fission:graphite_moderator"
+    "phoenix_fission:graphite_moderator",
+    "phoenix_fission:uranium_fuel_rod",
+    "phoenix_fission:thorium_breeder"
   ]
 }

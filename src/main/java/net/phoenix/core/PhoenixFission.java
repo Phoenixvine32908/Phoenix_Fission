@@ -37,6 +37,7 @@ import net.phoenix.core.common.data.materials.PhoenixFissionMaterials;
 import net.phoenix.core.common.data.materials.PhoenixMaterialFlags;
 import net.phoenix.core.common.data.recipeConditions.FluidInHatchCondition;
 import net.phoenix.core.common.machine.PhoenixFissionMachines;
+import net.phoenix.core.common.registry.PhoenixFissionEntities;
 import net.phoenix.core.configs.PhoenixConfigs;
 import net.phoenix.core.datagen.PhoenixDatagen;
 
@@ -86,6 +87,7 @@ public class PhoenixFission {
     public static void init() {
         PhoenixConfigs.init();
         REGISTRATE.registerRegistrate();
+        PhoenixFissionEntities.init();
         PhoenixFissionBlocks.init();
         PhoenixFissionItems.init();
         PhoenixMaterialFlags.init();

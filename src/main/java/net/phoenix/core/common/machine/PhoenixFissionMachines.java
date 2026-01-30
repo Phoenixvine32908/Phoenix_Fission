@@ -22,6 +22,8 @@ import net.phoenix.core.PhoenixFission;
 import net.phoenix.core.api.pattern.PhoenixPredicates;
 import net.phoenix.core.common.block.PhoenixFissionBlocks;
 import net.phoenix.core.common.data.PhoenixFissionRecipeTypes;
+import net.phoenix.core.common.machine.multiblock.BreederWorkableElectricMultiblockMachine;
+import net.phoenix.core.common.machine.multiblock.DynamicFissionReactorMachine;
 import net.phoenix.core.common.machine.multiblock.FissionSteamMultiblockMachine;
 import net.phoenix.core.common.machine.multiblock.FissionWorkableElectricMultiblockMachine;
 
@@ -63,12 +65,12 @@ public class PhoenixFissionMachines {
     }
 
     public static final MultiblockMachineDefinition HIGH_PERFORMANCE_BREEDER_REACTOR = REGISTRATE
-            .multiblock("high_performance_breeder_reactor", FissionWorkableElectricMultiblockMachine::new)
+            .multiblock("high_performance_breeder_reactor", BreederWorkableElectricMultiblockMachine::new)
             .langValue("§bHigh Performance Breeder Reactor")
             .recipeType(PhoenixFissionRecipeTypes.HIGH_PERFORMANCE_BREEDER_REACTOR_RECIPES)
             .generator(true)
             .regressWhenWaiting(false)
-            .recipeModifiers(FissionWorkableElectricMultiblockMachine::recipeModifier,
+            .recipeModifiers(BreederWorkableElectricMultiblockMachine::recipeModifier,
                     GTRecipeModifiers.ELECTRIC_OVERCLOCK.apply(OverclockingLogic.NON_PERFECT_OVERCLOCK_SUBTICK))
             .appearanceBlock(PhoenixFissionBlocks.FISSILE_REACTION_SAFE_CASING)
             .pattern(definition -> FactoryBlockPattern.start()
@@ -101,9 +103,9 @@ public class PhoenixFissionMachines {
                     .where('F', Predicates.blocks(GCYMBlocks.CASING_HIGH_TEMPERATURE_SMELTING.get()))
                     .where("G", Predicates.blocks(GCYMBlocks.HEAT_VENT.get()))
                     .where("H", Predicates.blocks(GTBlocks.CASING_POLYTETRAFLUOROETHYLENE_PIPE.get()))
-                    .where('I', PhoenixPredicates.fissionModerators())
+                    .where('I', PhoenixPredicates.fissionModerators().or(PhoenixPredicates.fissionBlankets()))
                     .where("J", Predicates.blocks(COIL_HSSG.get()))
-                    .where("K", PhoenixPredicates.fissionCoolers())
+                    .where("K", PhoenixPredicates.fissionCoolers().or(PhoenixPredicates.fissionFuelRods()))
                     .where("L", Predicates.blocks(CASING_TUNGSTENSTEEL_PIPE.get()))
                     .where("M", Predicates.controller(Predicates.blocks(definition.get())))
                     .build())
@@ -114,12 +116,12 @@ public class PhoenixFissionMachines {
             .register();
 
     public static final MultiblockMachineDefinition PRESSURIZED_FISSION_REACTOR = REGISTRATE
-            .multiblock("pressurized_fission_reactor", FissionWorkableElectricMultiblockMachine::new)
+            .multiblock("pressurized_fission_reactor", DynamicFissionReactorMachine::new)
             .langValue("§bPressurized Fission Reactor")
             .recipeType(PhoenixFissionRecipeTypes.PRESSURIZED_FISSION_REACTOR_RECIPES)
             .generator(true)
             .regressWhenWaiting(false)
-            .recipeModifiers(FissionWorkableElectricMultiblockMachine::recipeModifier,
+            .recipeModifiers(DynamicFissionReactorMachine::recipeModifier,
                     GTRecipeModifiers.ELECTRIC_OVERCLOCK.apply(OverclockingLogic.NON_PERFECT_OVERCLOCK_SUBTICK))
             .appearanceBlock(PhoenixFissionBlocks.FISSILE_REACTION_SAFE_CASING)
             .pattern(definition -> FactoryBlockPattern.start()
@@ -136,8 +138,8 @@ public class PhoenixFissionMachines {
                             .or(Predicates.autoAbilities(definition.getRecipeTypes())))
                     .where("D", blocks(Blocks.TINTED_GLASS))
                     .where("E", blocks(COIL_KANTHAL.get()))
-                    .where("F", PhoenixPredicates.fissionModerators())
-                    .where("G", PhoenixPredicates.fissionCoolers())
+                    .where('F', PhoenixPredicates.fissionModerators().or(PhoenixPredicates.fissionBlankets()))
+                    .where("G", PhoenixPredicates.fissionCoolers().or(PhoenixPredicates.fissionFuelRods()))
                     .where("H", blocks(PhoenixFissionBlocks.FISSILE_HEAT_SAFE_CASING.get()))
                     .where("I", Predicates.controller(Predicates.blocks(definition.get())))
                     .build())

@@ -1,13 +1,13 @@
 package net.phoenix.core.datagen.models;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.block.property.GTBlockStateProperties;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.client.model.generators.BlockModelBuilder;
 import net.phoenix.core.PhoenixFission;
+import net.phoenix.core.api.block.IFissionBlanketType;
 import net.phoenix.core.api.block.IFissionCoolerType;
+import net.phoenix.core.api.block.IFissionFuelRodType;
 import net.phoenix.core.api.block.IFissionModeratorType;
 
 import com.tterrag.registrate.providers.DataGenContext;
@@ -16,11 +16,38 @@ import com.tterrag.registrate.util.nullness.NonNullBiConsumer;
 
 public class PhoenixFissionMachineModels {
 
-    public static void casingTextures(BlockModelBuilder model, String casingTexturePath) {
-        ResourceLocation casing = PhoenixFission.id("block/" + casingTexturePath);
-        model.texture("bottom", casing);
-        model.texture("top", casing);
-        model.texture("side", casing);
+    private static ResourceLocation tinted2LayerParent() {
+        // points to assets/phoenix_fission/models/block/cube_2_layer_all_tinted.json
+        return PhoenixFission.id("block/cube_2_layer_all_tinted");
+    }
+
+    // Shared mask textures (make these PNGs once, no recolors needed)
+    private static ResourceLocation coolerMask() {
+        return PhoenixFission.id("block/fission/masks/cooler_mask");
+    }
+
+    private static ResourceLocation coolerMaskOn() {
+        return PhoenixFission.id("block/fission/masks/cooler_mask_active");
+    } // optional emissive variant
+
+    private static ResourceLocation rodMask() {
+        return PhoenixFission.id("block/fission/masks/fuel_rod_mask");
+    }
+
+    private static ResourceLocation rodMaskOn() {
+        return PhoenixFission.id("block/fission/masks/fuel_rod_mask_active");
+    }
+
+    private static ResourceLocation blanketMask() {
+        return PhoenixFission.id("block/fission/masks/blanket_mask");
+    }
+
+    private static ResourceLocation blanketMaskOn() {
+        return PhoenixFission.id("block/fission/masks/blanket_mask_active");
+    }
+
+    private static ResourceLocation modMask() {
+        return PhoenixFission.id("block/fission/masks/moderator_mask");
     }
 
     public static <
@@ -29,17 +56,67 @@ public class PhoenixFissionMachineModels {
             String name = ctx.getName();
             Block block = ctx.getEntry();
 
-            var inactive = prov.models().cubeAll(name, type.getTexture());
+            var inactive = prov.models()
+                    .withExistingParent(name, tinted2LayerParent())
+                    .texture("bot_all", type.getTexture())
+                    .texture("top_all", coolerMask());
 
             var active = prov.models()
-                    .withExistingParent(name + "_active", GTCEu.id("block/cube_2_layer/all"))
+                    .withExistingParent(name + "_active", tinted2LayerParent())
                     .texture("bot_all", type.getTexture())
-                    .texture("top_all", type.getTexture().withSuffix("_active"));
+                    .texture("top_all", coolerMaskOn()); // or coolerMask() if you don’t want a separate active overlay
 
             prov.getVariantBuilder(block)
                     .partialState().with(GTBlockStateProperties.ACTIVE, false)
                     .modelForState().modelFile(inactive).addModel()
+                    .partialState().with(GTBlockStateProperties.ACTIVE, true)
+                    .modelForState().modelFile(active).addModel();
+        };
+    }
 
+    public static <
+            T extends Block> NonNullBiConsumer<DataGenContext<Block, T>, RegistrateBlockstateProvider> createBlanketRodModel(IFissionBlanketType type) {
+        return (ctx, prov) -> {
+            String name = ctx.getName();
+            Block block = ctx.getEntry();
+
+            var inactive = prov.models()
+                    .withExistingParent(name, tinted2LayerParent())
+                    .texture("bot_all", type.getTexture())
+                    .texture("top_all", blanketMask());
+
+            var active = prov.models()
+                    .withExistingParent(name + "_active", tinted2LayerParent())
+                    .texture("bot_all", type.getTexture())
+                    .texture("top_all", blanketMaskOn());
+
+            prov.getVariantBuilder(block)
+                    .partialState().with(GTBlockStateProperties.ACTIVE, false)
+                    .modelForState().modelFile(inactive).addModel()
+                    .partialState().with(GTBlockStateProperties.ACTIVE, true)
+                    .modelForState().modelFile(active).addModel();
+        };
+    }
+
+    public static <
+            T extends Block> NonNullBiConsumer<DataGenContext<Block, T>, RegistrateBlockstateProvider> createFuelRodModel(IFissionFuelRodType type) {
+        return (ctx, prov) -> {
+            String name = ctx.getName();
+            Block block = ctx.getEntry();
+
+            var inactive = prov.models()
+                    .withExistingParent(name, tinted2LayerParent())
+                    .texture("bot_all", type.getTexture())
+                    .texture("top_all", rodMask());
+
+            var active = prov.models()
+                    .withExistingParent(name + "_active", tinted2LayerParent())
+                    .texture("bot_all", type.getTexture())
+                    .texture("top_all", rodMaskOn());
+
+            prov.getVariantBuilder(block)
+                    .partialState().with(GTBlockStateProperties.ACTIVE, false)
+                    .modelForState().modelFile(inactive).addModel()
                     .partialState().with(GTBlockStateProperties.ACTIVE, true)
                     .modelForState().modelFile(active).addModel();
         };
@@ -51,7 +128,11 @@ public class PhoenixFissionMachineModels {
             String name = ctx.getName();
             Block block = ctx.getEntry();
 
-            var model = prov.models().cubeAll(name, type.getTexture());
+            // If you want moderators tinted too:
+            var model = prov.models()
+                    .withExistingParent(name, tinted2LayerParent())
+                    .texture("bot_all", type.getTexture())
+                    .texture("top_all", modMask());
 
             prov.simpleBlock(block, model);
         };

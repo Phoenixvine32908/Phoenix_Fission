@@ -8,7 +8,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.phoenix.core.PhoenixAPI;
 import net.phoenix.core.PhoenixFission;
+import net.phoenix.core.api.block.IFissionBlanketType;
 import net.phoenix.core.api.block.IFissionCoolerType;
+import net.phoenix.core.api.block.IFissionFuelRodType;
 import net.phoenix.core.api.block.IFissionModeratorType;
 import net.phoenix.core.datagen.models.PhoenixFissionMachineModels;
 
@@ -36,12 +38,25 @@ public class PhoenixFissionBlocks {
                 .build()
                 .register();
     }
+    public static final BlockEntry<NukeBlock> NUKE_BLOCK = REGISTRATE
+            .block("nuke_block", NukeBlock::new)
+            .initialProperties(() -> Blocks.TNT) // TNT-ish
+            .properties(p -> p.isValidSpawn((state, level, pos, ent) -> false))
+            .blockstate((ctx, prov) -> prov.simpleBlock(ctx.getEntry(),
+                    prov.models().cubeAll(ctx.getName(), PhoenixFission.id("block/nuke_block"))))
+            .item(BlockItem::new)
+            .build()
+            .register();
 
     public static final BlockEntry<FissionCoolerBlock> COOLER_BASIC = createCoolerBlock(
-            FissionCoolerBlock.fissionCoolerType.COOLER_BASIC);
+            FissionCoolerBlock.FissionCoolerTypes.COOLER_BASIC);
 
     public static final BlockEntry<FissionModeratorBlock> MODERATOR_GRAPHITE = createModeratorBlock(
-            FissionModeratorBlock.fissionModeratorType.MODERATOR_GRAPHITE);
+            FissionModeratorBlock.FissionModeratorTypes.MODERATOR_GRAPHITE);
+    public static final BlockEntry<FissionFuelRodBlock> FUEL_ROD_URANIUM = createFuelRodBlock(
+            FissionFuelRodBlock.FissionFuelRodTypes.URANIUM);
+    public static final BlockEntry<FissionBlanketBlock> THORIUM_BLANKET = createBlanketBlock(
+            FissionBlanketBlock.BreederBlanketTypes.THORIUM_BREEDER);
 
     public static BlockEntry<Block> FISSILE_HEAT_SAFE_CASING = registerSimpleBlock(
             "§bFissile Heat Safe Casing", "fissile_heat_safe_casing",
@@ -67,6 +82,41 @@ public class PhoenixFissionBlocks {
 
         PhoenixAPI.FISSION_MODERATORS.put(type, moderator);
         return moderator;
+    }
+
+    private static BlockEntry<FissionFuelRodBlock> createFuelRodBlock(IFissionFuelRodType type) {
+        var rod = REGISTRATE
+                .block("%s".formatted(type.getName()),
+                        p -> new FissionFuelRodBlock(p, type))
+                .initialProperties(() -> Blocks.IRON_BLOCK)
+                .properties(p -> p.isValidSpawn((state, level, pos, ent) -> false))
+                // Assuming you have a model generator for fuel rods in PhoenixFissionMachineModels
+                .blockstate(PhoenixFissionMachineModels.createFuelRodModel(type))
+                .tag(CustomTags.MINEABLE_WITH_CONFIG_VALID_PICKAXE_WRENCH)
+                .item(BlockItem::new)
+                .build()
+                .register();
+
+        // Register into the API map so the multiblock logic can find it
+        PhoenixAPI.FISSION_FUEL_RODS.put(type, rod);
+        return rod;
+    }
+
+    private static BlockEntry<FissionBlanketBlock> createBlanketBlock(IFissionBlanketType type) {
+        var blanket = REGISTRATE
+                .block("%s".formatted(type.getName()),
+                        p -> new FissionBlanketBlock(p, type))
+                .initialProperties(() -> Blocks.IRON_BLOCK)
+                .properties(p -> p.isValidSpawn((state, level, pos, ent) -> false))
+                .blockstate(PhoenixFissionMachineModels.createBlanketRodModel(type)) // Linked to model gen below
+                .tag(CustomTags.MINEABLE_WITH_CONFIG_VALID_PICKAXE_WRENCH)
+                .item(BlockItem::new)
+                .build()
+                .register();
+
+        // Register into the API map for the Breeder Multiblock pattern
+        PhoenixAPI.FISSION_BLANKETS.put(type, blanket);
+        return blanket;
     }
 
     private static BlockEntry<FissionCoolerBlock> createCoolerBlock(IFissionCoolerType type) {

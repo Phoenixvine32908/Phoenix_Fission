@@ -11,7 +11,9 @@ import net.phoenix.core.common.data.materials.PhoenixFissionMaterials;
 import net.phoenix.core.common.machine.PhoenixFissionMachines;
 import net.phoenix.core.common.machine.multiblock.*;
 import net.phoenix.core.configs.PhoenixConfigs;
+import net.phoenix.core.integration.kubejs.builders.FissionBlanketRodBlockBuilder;
 import net.phoenix.core.integration.kubejs.builders.FissionCoolerBlockBuilder;
+import net.phoenix.core.integration.kubejs.builders.FissionFuelRodBlockBuilder;
 import net.phoenix.core.integration.kubejs.builders.FissionModeratorBlockBuilder;
 import net.phoenix.core.integration.kubejs.recipe.PhoenixRecipeSchema;
 
@@ -41,6 +43,14 @@ public class PhoenixKubeJSPlugin extends KubeJSPlugin {
                 PhoenixFission.MOD_ID + ":fission_moderator",
                 FissionModeratorBlockBuilder.class,
                 FissionModeratorBlockBuilder::new);
+        RegistryInfo.BLOCK.addType(
+                PhoenixFission.MOD_ID + ":fission_fuel_rod",
+                FissionFuelRodBlockBuilder.class,
+                FissionFuelRodBlockBuilder::new);
+        RegistryInfo.BLOCK.addType(
+                PhoenixFission.MOD_ID + ":fission_blanket_rod",
+                FissionBlanketRodBlockBuilder.class,
+                FissionBlanketRodBlockBuilder::new);
     }
 
     @Override
@@ -68,6 +78,8 @@ public class PhoenixKubeJSPlugin extends KubeJSPlugin {
         event.add("PhoenixFissionItems", PhoenixFissionItems.class);
         event.add("PhoenixFissionRecipeTypes", PhoenixFissionRecipeTypes.class);
         event.add("FissionWorkableElectricMultiblockMachine", FissionWorkableElectricMultiblockMachine.class);
+        event.add("BreederWorkableElectricMultiblockMachine", BreederWorkableElectricMultiblockMachine.class);
+        event.add("DynamicFissionReactorMachine", DynamicFissionReactorMachine.class);
         event.add("FissionSteamMultiblockMachine", FissionSteamMultiblockMachine.class);
         event.add("PhoenixFission", PhoenixFission.class);
     }

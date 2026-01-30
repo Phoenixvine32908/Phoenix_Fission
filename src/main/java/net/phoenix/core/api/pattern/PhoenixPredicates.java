@@ -6,9 +6,13 @@ import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.network.chat.Component;
 import net.phoenix.core.PhoenixAPI;
+import net.phoenix.core.api.block.IFissionBlanketType;
 import net.phoenix.core.api.block.IFissionCoolerType;
+import net.phoenix.core.api.block.IFissionFuelRodType;
 import net.phoenix.core.api.block.IFissionModeratorType;
+import net.phoenix.core.common.block.FissionBlanketBlock;
 import net.phoenix.core.common.block.FissionCoolerBlock;
+import net.phoenix.core.common.block.FissionFuelRodBlock;
 import net.phoenix.core.common.block.FissionModeratorBlock;
 
 import java.util.ArrayList;
@@ -46,6 +50,57 @@ public class PhoenixPredicates {
                         .map(e -> BlockInfo.fromBlockState(e.getValue().get().defaultBlockState()))
                         .toArray(BlockInfo[]::new))
                 .addTooltips(Component.translatable("phoenix.multiblock.pattern.info.multiple_coolers"));
+    }
+
+    public static TraceabilityPredicate fissionBlankets() {
+        return new TraceabilityPredicate(blockWorldState -> {
+            var blockState = blockWorldState.getBlockState();
+            for (Map.Entry<IFissionBlanketType, Supplier<FissionBlanketBlock>> entry : PhoenixAPI.FISSION_BLANKETS
+                    .entrySet()) {
+                if (blockState.is(entry.getValue().get())) {
+                    var type = entry.getKey();
+                    List<IFissionBlanketType> componentList = blockWorldState.getMatchContext().getOrPut("BlanketTypes",
+                            new ArrayList<>());
+                    componentList.add(type);
+                    return true;
+                }
+            }
+            return false;
+        },
+                () -> PhoenixAPI.FISSION_BLANKETS.entrySet().stream()
+                        .sorted(Comparator.comparingInt(e -> e.getKey().getTier()))
+                        .map(e -> BlockInfo.fromBlockState(e.getValue().get().defaultBlockState()))
+                        .toArray(BlockInfo[]::new))
+                .addTooltips(Component.translatable("phoenix.multiblock.pattern.info.multiple_blankets"));
+    }
+
+    public static TraceabilityPredicate fissionFuelRods() {
+        return new TraceabilityPredicate(blockWorldState -> {
+            var blockState = blockWorldState.getBlockState();
+
+            for (Map.Entry<IFissionFuelRodType, Supplier<FissionFuelRodBlock>> entry : PhoenixAPI.FISSION_FUEL_RODS
+                    .entrySet()) {
+
+                if (blockState.is(entry.getValue().get())) {
+
+                    var type = entry.getKey();
+
+                    List<IFissionFuelRodType> componentList = blockWorldState
+                            .getMatchContext()
+                            .getOrPut("FuelRodTypes", new ArrayList<>());
+                    componentList.add(type);
+
+                    return true;
+                }
+            }
+
+            return false;
+        },
+                () -> PhoenixAPI.FISSION_FUEL_RODS.entrySet().stream()
+                        .sorted(Comparator.comparingInt(e -> e.getKey().getTier()))
+                        .map(e -> BlockInfo.fromBlockState(e.getValue().get().defaultBlockState()))
+                        .toArray(BlockInfo[]::new))
+                .addTooltips(Component.translatable("phoenix.multiblock.pattern.info.multiple_fuel_rods"));
     }
 
     public static TraceabilityPredicate fissionModerators() {

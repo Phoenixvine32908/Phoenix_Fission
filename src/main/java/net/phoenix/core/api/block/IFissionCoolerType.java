@@ -21,6 +21,16 @@ public interface IFissionCoolerType {
 
     int getCoolerTemperature();
 
+    default int getTintColor() {
+        Material m = getMaterial();
+        if (m != null && m != GTMaterials.NULL) {
+            try {
+                return 0xFF000000 | m.getMaterialRGB();
+            } catch (Throwable ignored) {}
+        }
+        return 0xFFFFFFFF;
+    }
+
     @NotNull
     String getRequiredCoolantMaterialId();
 

@@ -1,6 +1,7 @@
 package net.phoenix.core.api.block;
 
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
+import com.gregtechceu.gtceu.common.data.GTMaterials;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.util.Lazy;
@@ -17,9 +18,30 @@ public interface IFissionModeratorType {
     @NotNull
     String getName();
 
+    default int getTintColor() {
+        Material m = getMaterial();
+        if (m != null && m != GTMaterials.NULL) {
+            try {
+                return 0xFF000000 | m.getMaterialRGB();
+            } catch (Throwable ignored) {}
+        }
+        return 0xFFFFFFFF;
+    }
+
     int getEUBoost();
 
     int getFuelDiscount();
+
+    default double getHeatMultiplier() {
+        return getTier() * 0.5;
+    }
+
+    /**
+     * How many extra parallel channels this moderator enables.
+     */
+    default int getParallelBonus() {
+        return getTier();
+    }
 
     Material getMaterial();
 
