@@ -17,18 +17,16 @@ import com.tterrag.registrate.util.nullness.NonNullBiConsumer;
 public class PhoenixFissionMachineModels {
 
     private static ResourceLocation tinted2LayerParent() {
-        // points to assets/phoenix_fission/models/block/cube_2_layer_all_tinted.json
         return PhoenixFission.id("block/cube_2_layer_all_tinted");
     }
 
-    // Shared mask textures (make these PNGs once, no recolors needed)
     private static ResourceLocation coolerMask() {
         return PhoenixFission.id("block/fission/masks/cooler_mask");
     }
 
     private static ResourceLocation coolerMaskOn() {
         return PhoenixFission.id("block/fission/masks/cooler_mask_active");
-    } // optional emissive variant
+    }
 
     private static ResourceLocation rodMask() {
         return PhoenixFission.id("block/fission/masks/fuel_rod_mask");
@@ -64,7 +62,7 @@ public class PhoenixFissionMachineModels {
             var active = prov.models()
                     .withExistingParent(name + "_active", tinted2LayerParent())
                     .texture("bot_all", type.getTexture())
-                    .texture("top_all", coolerMaskOn()); // or coolerMask() if you don’t want a separate active overlay
+                    .texture("top_all", coolerMaskOn());
 
             prov.getVariantBuilder(block)
                     .partialState().with(GTBlockStateProperties.ACTIVE, false)
@@ -128,7 +126,6 @@ public class PhoenixFissionMachineModels {
             String name = ctx.getName();
             Block block = ctx.getEntry();
 
-            // If you want moderators tinted too:
             var model = prov.models()
                     .withExistingParent(name, tinted2LayerParent())
                     .texture("bot_all", type.getTexture())

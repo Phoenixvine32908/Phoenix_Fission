@@ -8,9 +8,10 @@ import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
 import com.gregtechceu.gtceu.api.recipe.content.ContentModifier;
 import com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction;
 import com.gregtechceu.gtceu.data.recipe.builder.GTRecipeBuilder;
+
 import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
 import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
-import lombok.Getter;
+
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
@@ -18,8 +19,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.phoenix.core.api.block.IFissionCoolerType;
 import net.phoenix.core.api.block.IFissionFuelRodType;
-import net.phoenix.core.api.block.IFissionModeratorType;
 import net.phoenix.core.configs.PhoenixConfigs;
+
+import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
@@ -31,8 +33,7 @@ public class DynamicFissionReactorMachine extends FissionWorkableElectricMultibl
 
     protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
             DynamicFissionReactorMachine.class,
-            FissionWorkableElectricMultiblockMachine.MANAGED_FIELD_HOLDER
-    );
+            FissionWorkableElectricMultiblockMachine.MANAGED_FIELD_HOLDER);
 
     @Getter
     @Persisted
@@ -49,22 +50,13 @@ public class DynamicFissionReactorMachine extends FissionWorkableElectricMultibl
 
     @Override
     protected void handleReactorLogic(boolean running) {
-        // Keep mirror in sync for HUDs / other machines
         currentHeatMirror = this.heat;
 
-        // Delegate full behavior (heat, coolant drain, cooling, power while cooling, meltdown) to base
         super.handleReactorLogic(running);
 
         currentHeatMirror = this.heat;
     }
 
-
-    /**
-     * ✅ Put parallels back for ALL your machines:
-     * - IO scaled by parallels
-     * - EU boost affects eut multiplier
-     * - Fuel discount affects duration multiplier
-     */
     public static ModifierFunction recipeModifier(MetaMachine machine, GTRecipe recipe) {
         if (!(machine instanceof FissionWorkableElectricMultiblockMachine m)) {
             return com.gregtechceu.gtceu.api.recipe.modifier.RecipeModifier
@@ -102,38 +94,51 @@ public class DynamicFissionReactorMachine extends FissionWorkableElectricMultibl
                 .orElse(null);
     }
 
-    // -----------------------------------------------------------------------
-    // Machine-driven coolant (still uses cooler's coolant material id -> fluid)
-    // -----------------------------------------------------------------------
-
     protected boolean canConsumeCoolantForThisTickMachineDriven() {
         var cfg = PhoenixConfigs.INSTANCE.fission;
         if (!cfg.coolingRequiresCoolant) return true;
         if (activeCoolers.isEmpty()) return true;
 
-        // additive behavior matches your base config
         if (!cfg.coolantUsageAdditive) {
             IFissionCoolerType primary = primaryCoolerType;
             if (primary == null) return true;
 
             int mb = Math.max(0, primary.getCoolantPerTick());
-            return canConsumeMaterialFluid(primary.getRequiredCoolantMaterial(), mb);
+            if (mb <= 0) return true;
+
+            String inId = primary.getInputCoolantFluidId();
+            if (inId.isEmpty() || "none".equalsIgnoreCase(inId)) return true;
+
+            String outId = primary.getOutputCoolantFluidId();
+            return canConvertCoolant(inId, outId, mb);
         }
 
-        Map<com.gregtechceu.gtceu.api.data.chemical.material.Material, Integer> required = new HashMap<>();
+        Map<String, Integer> required = new HashMap<>();
+        Map<String, String> keyToIn = new HashMap<>();
+        Map<String, String> keyToOut = new HashMap<>();
+
         for (IFissionCoolerType c : activeCoolers) {
             int mb = Math.max(0, c.getCoolantPerTick());
             if (mb <= 0) continue;
 
-            var mat = c.getRequiredCoolantMaterial();
-            if (mat == null) continue;
+            String inId = c.getInputCoolantFluidId();
+            if (inId.isEmpty() || "none".equalsIgnoreCase(inId)) continue;
 
-            required.merge(mat, mb, Integer::sum);
+            String outId = c.getOutputCoolantFluidId();
+            String key = inId + "->" + outId;
+
+            required.merge(key, mb, Integer::sum);
+            keyToIn.putIfAbsent(key, inId);
+            keyToOut.putIfAbsent(key, outId);
         }
 
         for (var e : required.entrySet()) {
-            if (!canConsumeMaterialFluid(e.getKey(), e.getValue())) return false;
+            String key = e.getKey();
+            String inId = keyToIn.getOrDefault(key, "");
+            String outId = keyToOut.getOrDefault(key, "");
+            if (!canConvertCoolant(inId, outId, e.getValue())) return false;
         }
+
         return true;
     }
 
@@ -147,30 +152,51 @@ public class DynamicFissionReactorMachine extends FissionWorkableElectricMultibl
             if (primary == null) return true;
 
             int mb = Math.max(0, primary.getCoolantPerTick());
-            return tryConsumeMaterialFluid(primary.getRequiredCoolantMaterial(), mb);
+            if (mb <= 0) return true;
+
+            String inId = primary.getInputCoolantFluidId();
+            if (inId.isEmpty() || "none".equalsIgnoreCase(inId)) return true;
+
+            String outId = primary.getOutputCoolantFluidId();
+            return tryConvertCoolant(inId, outId, mb);
         }
 
-        Map<com.gregtechceu.gtceu.api.data.chemical.material.Material, Integer> required = new HashMap<>();
+        Map<String, Integer> required = new HashMap<>();
+        Map<String, String> keyToIn = new HashMap<>();
+        Map<String, String> keyToOut = new HashMap<>();
+
         for (IFissionCoolerType c : activeCoolers) {
             int mb = Math.max(0, c.getCoolantPerTick());
             if (mb <= 0) continue;
 
-            var mat = c.getRequiredCoolantMaterial();
-            if (mat == null) continue;
+            String inId = c.getInputCoolantFluidId();
+            if (inId.isEmpty() || "none".equalsIgnoreCase(inId)) continue;
 
-            required.merge(mat, mb, Integer::sum);
+            String outId = c.getOutputCoolantFluidId();
+            String key = inId + "->" + outId;
+
+            required.merge(key, mb, Integer::sum);
+            keyToIn.putIfAbsent(key, inId);
+            keyToOut.putIfAbsent(key, outId);
         }
 
         for (var e : required.entrySet()) {
-            if (!tryConsumeMaterialFluid(e.getKey(), e.getValue())) return false;
+            String key = e.getKey();
+            String inId = keyToIn.getOrDefault(key, "");
+            String outId = keyToOut.getOrDefault(key, "");
+            if (!tryConvertCoolant(inId, outId, e.getValue())) return false;
         }
+
         return true;
     }
 
-    // -----------------------------------------------------------------------
-    // Machine-driven fuel (Forge item ids ONLY)
-    // -----------------------------------------------------------------------
-
+    /**
+     * Fuel consumption + optional spent/depleted fuel output.
+     *
+     * NOTE: This class overrides the base tickFuelConsumptionMachineDriven(), so any spent-fuel output logic
+     * must live here (otherwise it will never run for machines extending this class, e.g. breeders).
+     */
+    @Override
     protected void tickFuelConsumptionMachineDriven(int parallels) {
         var cfg = PhoenixConfigs.INSTANCE.fission;
 
@@ -181,7 +207,6 @@ public class DynamicFissionReactorMachine extends FissionWorkableElectricMultibl
         int duration = Math.max(1, fuelType.getDurationTicks());
         int amountPerCycle = Math.max(0, fuelType.getAmountPerCycle());
 
-        // total per cycle (config scaling)
         double totalPerCycle = amountPerCycle;
 
         if (cfg.fuelUsageScalesWithRodCount) {
@@ -191,40 +216,47 @@ public class DynamicFissionReactorMachine extends FissionWorkableElectricMultibl
             totalPerCycle *= Math.max(1, parallels);
         }
 
-        // moderator discount
         int discountPct = getModeratorFuelDiscountClamped();
         double mult = 1.0 - (discountPct / 100.0);
         if (mult < 0.0) mult = 0.0;
         totalPerCycle *= mult;
 
-        // remainder accumulator (persisted in base: fuelRemainder)
         double perTick = totalPerCycle / duration;
         fuelRemainder += perTick;
 
         int toConsumeNow = (int) Math.floor(fuelRemainder);
         if (toConsumeNow <= 0) return;
 
-        // IMPORTANT: only subtract remainder if we actually consume successfully
-        String itemId = fuelType.getFuelKey();
+        // NOTE: do NOT subtract remainder unless we successfully consume,
+        // so we don't "lose" required fuel during starvation.
+        String inItemId = getFuelItemIdCompat(fuelType);
+        if (inItemId.isEmpty()) return;
 
-        // gate first
-        if (!canConsumeItemKey(itemId, toConsumeNow)) {
-            // out of fuel at the consumption boundary -> push unsafe so meltdown engages
-            heat = Math.max(heat, cfg.maxSafeHeat + 1.0);
+        if (!canConsumeItemKey(inItemId, toConsumeNow)) {
             return;
         }
 
-        if (!tryConsumeItemKey(itemId, toConsumeNow)) {
-            heat = Math.max(heat, cfg.maxSafeHeat + 1.0);
+        if (!tryConsumeItemKey(inItemId, toConsumeNow)) {
             return;
         }
 
+        // Successful consumption: apply it.
         fuelRemainder -= toConsumeNow;
-    }
 
-    // -----------------------------------------------------------------------
-    // Local item-gated IO helpers (Forge registry)
-    // -----------------------------------------------------------------------
+        // Output spent/depleted fuel item (hot-coolant analogue).
+        String outItemId = getFuelOutputItemIdCompat(fuelType);
+        if (!outItemId.isEmpty() && !"none".equalsIgnoreCase(outItemId) && !outItemId.equalsIgnoreCase(inItemId)) {
+
+            int max = getMaxStackSizeForItemId(outItemId);
+            int remaining = toConsumeNow;
+            while (remaining > 0) {
+                int batch = Math.min(max, remaining);
+                tryOutputItemId(outItemId, batch);
+
+                remaining -= batch;
+            }
+        }
+    }
 
     protected boolean canConsumeItemKey(String itemId, int count) {
         if (count <= 0) return true;

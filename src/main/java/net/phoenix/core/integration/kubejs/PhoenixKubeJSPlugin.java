@@ -80,7 +80,6 @@ public class PhoenixKubeJSPlugin extends KubeJSPlugin {
         event.add("FissionWorkableElectricMultiblockMachine", FissionWorkableElectricMultiblockMachine.class);
         event.add("BreederWorkableElectricMultiblockMachine", BreederWorkableElectricMultiblockMachine.class);
         event.add("DynamicFissionReactorMachine", DynamicFissionReactorMachine.class);
-        event.add("FissionSteamMultiblockMachine", FissionSteamMultiblockMachine.class);
         event.add("PhoenixFission", PhoenixFission.class);
     }
 }

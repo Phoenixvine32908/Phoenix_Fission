@@ -2,7 +2,6 @@ package net.phoenix.core.common.machine;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
-import com.gregtechceu.gtceu.api.data.RotationState;
 import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
@@ -15,17 +14,13 @@ import com.gregtechceu.gtceu.api.recipe.OverclockingLogic;
 import com.gregtechceu.gtceu.api.registry.registrate.MachineBuilder;
 import com.gregtechceu.gtceu.common.data.*;
 
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.phoenix.core.PhoenixFission;
 import net.phoenix.core.api.pattern.PhoenixPredicates;
 import net.phoenix.core.common.block.PhoenixFissionBlocks;
 import net.phoenix.core.common.data.PhoenixFissionRecipeTypes;
 import net.phoenix.core.common.machine.multiblock.BreederWorkableElectricMultiblockMachine;
 import net.phoenix.core.common.machine.multiblock.DynamicFissionReactorMachine;
-import net.phoenix.core.common.machine.multiblock.FissionSteamMultiblockMachine;
-import net.phoenix.core.common.machine.multiblock.FissionWorkableElectricMultiblockMachine;
 
 import java.util.Locale;
 import java.util.function.BiFunction;
@@ -133,7 +128,8 @@ public class PhoenixFissionMachines {
                     .where("A", air())
                     .where("B", any())
                     .where("C", blocks(PhoenixFissionBlocks.FISSILE_REACTION_SAFE_CASING.get()).setMinGlobalLimited(12) // Corrected////
-                            .or(Predicates.abilities(PartAbility.IMPORT_FLUIDS).setPreviewCount(1))                                // line
+                            .or(Predicates.abilities(PartAbility.IMPORT_FLUIDS).setPreviewCount(1))
+                            .or(Predicates.abilities(PartAbility.EXPORT_FLUIDS).setPreviewCount(1))
                             .or(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1))
                             .or(Predicates.autoAbilities(definition.getRecipeTypes())))
                     .where("D", blocks(Blocks.TINTED_GLASS))
@@ -142,45 +138,6 @@ public class PhoenixFissionMachines {
                     .where("G", PhoenixPredicates.fissionCoolers().or(PhoenixPredicates.fissionFuelRods()))
                     .where("H", blocks(PhoenixFissionBlocks.FISSILE_HEAT_SAFE_CASING.get()))
                     .where("I", Predicates.controller(Predicates.blocks(definition.get())))
-                    .build())
-            .model(
-                    createWorkableCasingMachineModel(
-                            PhoenixFission.id("block/fission/fissile_reaction_safe_casing"),
-                            GTCEu.id("block/multiblock/fusion_reactor")))
-            .register();
-    public static final MultiblockMachineDefinition ADVANCED_PRESSURIZED_FISSION_REACTOR = REGISTRATE
-            .multiblock("advanced_pressurized_fission_reactor", FissionSteamMultiblockMachine::new)
-            .langValue("§bAdvanced Pressurized Fission Reactor")
-            .recipeType(PhoenixFissionRecipeTypes.ADVANCED_PRESSURIZED_FISSION_REACTOR_RECIPES)
-            .generator(true)
-            .regressWhenWaiting(false)
-            .recipeModifiers(FissionSteamMultiblockMachine::recipeModifier,
-                    GTRecipeModifiers.ELECTRIC_OVERCLOCK.apply(OverclockingLogic.NON_PERFECT_OVERCLOCK_SUBTICK))
-            .appearanceBlock(PhoenixFissionBlocks.FISSILE_REACTION_SAFE_CASING)
-            .pattern(definition -> FactoryBlockPattern.start()
-                    .aisle("BCCCCCB", "CDDDDDC", "CDDDDDC", "CDDDDDC", "CDDDDDC", "CDDDDDC", "BCCCCCB")
-                    .aisle("CCCCCCC", "DAAEAAD", "DAAEAAD", "DAAEAAD", "DAAEAAD", "DAAEAAD", "CDDFDDC")
-                    .aisle("CCGEGCC", "DAHHHAD", "DAHHHAD", "DAHHHAD", "DAIIIAD", "DAEEEAD", "CDFGFDC")
-                    .aisle("CCEEECC", "DEHEHED", "DEHEHED", "DEHEHED", "DEIEIED", "DEEEEED", "CFGFGFC")
-                    .aisle("CCGEGCC", "DAHHHAD", "DAHHHAD", "DAHHHAD", "DAIIIAD", "DAEEEAD", "CDFGFDC")
-                    .aisle("CCCCCCC", "DAAEAAD", "DAAEAAD", "DAAEAAD", "DAAEAAD", "DAAEAAD", "CDDFDDC")
-                    .aisle("BCCJCCB", "CDDDDDC", "CDDDDDC", "CDDDDDC", "CDDDDDC", "CDDDDDC", "BCCCCCB")
-                    .where("A", air())
-                    .where("B", any())
-                    .where("C", blocks(PhoenixFissionBlocks.FISSILE_REACTION_SAFE_CASING.get()).setMinGlobalLimited(12) // Corrected////
-                            // line
-                            .or(Predicates.abilities(PartAbility.IMPORT_ITEMS).setPreviewCount(1))
-                            .or(Predicates.abilities(PartAbility.EXPORT_ITEMS).setPreviewCount(1))
-                            .or(Predicates.abilities(PartAbility.IMPORT_FLUIDS).setPreviewCount(1))
-                            .or(Predicates.abilities(PartAbility.EXPORT_FLUIDS).setPreviewCount(1))
-                            .or(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1)))
-                    .where("D", blocks(Blocks.TINTED_GLASS))
-                    .where("E", PhoenixPredicates.fissionModerators())
-                    .where("F", blocks(PhoenixFissionBlocks.FISSILE_HEAT_SAFE_CASING.get()))
-                    .where("G", Predicates.blocks(COIL_NICHROME.get()))
-                    .where("H", PhoenixPredicates.fissionCoolers())
-                    .where("I", blocks(Blocks.ICE))
-                    .where("J", Predicates.controller(Predicates.blocks(definition.get())))
                     .build())
             .model(
                     createWorkableCasingMachineModel(
@@ -212,52 +169,6 @@ public class PhoenixFissionMachines {
                     createWorkableCasingMachineModel(
                             PhoenixFission.id("block/fission/fissile_heat_safe_casing"),
                             GTCEu.id("block/multiblock/fusion_reactor")))
-            .register();
-
-    public static final MultiblockMachineDefinition ALCHEMICAL_IMBUER = REGISTRATE
-            .multiblock("alchemical_imbuer", WorkableElectricMultiblockMachine::new)
-            .langValue("§5Alchemical Imbuer")
-            .recipeTypes(PhoenixFissionRecipeTypes.SOURCE_EXTRACTION_RECIPES,
-                    PhoenixFissionRecipeTypes.SOURCE_IMBUEMENT_RECIPES) // PhoenixFissionRecipeTypes.SOURCE_IMBUMENT_RECIPES)//"SOURCE_IMBUMENT_RECIPES","SOURCE_EXTRACTION_RECIPES")
-            .recipeModifiers(GTRecipeModifiers.OC_NON_PERFECT_SUBTICK, BATCH_MODE)
-            .appearanceBlock(GTBlocks.CASING_TITANIUM_STABLE)
-            .rotationState(RotationState.NON_Y_AXIS)
-            .pattern(definition -> FactoryBlockPattern.start()
-                    .aisle("BBCCCBB", "BBBBBBB", "BBBBBBB", "BBBBBBB", "BBBBBBB", "BBBBBBB", "BBCCCBB")
-                    .aisle("BCDDDCB", "BBCCCBB", "BBBBBBB", "BBBBBBB", "BBBBBBB", "BBCCCBB", "BCDDDCB")
-                    .aisle("CDDDDDC", "BCEEECB", "BBFFFBB", "BBFFFBB", "BBFFFBB", "BCDDDCB", "CDGGGDC")
-                    .aisle("CDDDDDC", "BCEEECB", "BBFEFBB", "BBFHFBB", "BBFEFBB", "BCDIDCB", "CDGJGDC")
-                    .aisle("CDDDDDC", "BCEEECB", "BBFFFBB", "BBFFFBB", "BBFFFBB", "BCDDDCB", "CDGGGDC")
-                    .aisle("BCDDDCB", "BBCCCBB", "BBBBBBB", "BBBBBBB", "BBBBBBB", "BBCCCBB", "BCDDDCB")
-                    .aisle("BBCKCBB", "BBBBBBB", "BBBBBBB", "BBBBBBB", "BBBBBBB", "BBBBBBB", "BBCCCBB")
-                    .where("B", Predicates.any())
-                    .where("C",
-                            Predicates.blocks(GTBlocks.CASING_STAINLESS_CLEAN.get())
-                                    .or(Predicates.autoAbilities(definition.getRecipeTypes()))
-                                    .or(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1)))
-                    .where("D",
-                            Predicates.blocks(
-                                    ForgeRegistries.BLOCKS.getValue(ResourceLocation.parse("ars_nouveau:sourcestone"))))
-                    .where("E",
-                            Predicates.blocks(ForgeRegistries.BLOCKS
-                                    .getValue(ResourceLocation.parse("ars_nouveau:magebloom_block"))))
-                    .where("F", Predicates.blocks(GTBlocks.CASING_TEMPERED_GLASS.get()))
-                    .where("G",
-                            Predicates.blocks(
-                                    ForgeRegistries.BLOCKS.getValue(ResourceLocation.parse("ars_nouveau:void_prism"))))
-                    .where("H",
-                            Predicates.blocks(ForgeRegistries.BLOCKS
-                                    .getValue(ResourceLocation.parse("ars_nouveau:source_gem_block"))))
-                    .where("I",
-                            Predicates.blocks(
-                                    ForgeRegistries.BLOCKS.getValue(ResourceLocation.parse("ars_nouveau:arcane_core"))))
-                    .where("J",
-                            Predicates.blocks(ForgeRegistries.BLOCKS
-                                    .getValue(ResourceLocation.parse("ars_nouveau:agronomic_sourcelink"))))
-                    .where("K", Predicates.controller(Predicates.blocks(definition.get())))
-                    .build())
-            .workableCasingModel(GTCEu.id("block/casings/solid/machine_casing_clean_stainless_steel"),
-                    GTCEu.id("block/multiblock/implosion_compressor"))
             .register();
 
     public static void init() {}

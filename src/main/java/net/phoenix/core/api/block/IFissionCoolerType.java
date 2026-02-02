@@ -1,12 +1,10 @@
 package net.phoenix.core.api.block;
 
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
-import com.gregtechceu.gtceu.common.data.GTMaterials;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.util.Lazy;
 import net.phoenix.core.PhoenixAPI;
-import net.phoenix.core.common.data.PhoenixMaterialRegistry;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,36 +19,30 @@ public interface IFissionCoolerType {
 
     int getCoolerTemperature();
 
-    default int getTintColor() {
-        Material m = getMaterial();
-        if (m != null && m != GTMaterials.NULL) {
-            try {
-                return 0xFF000000 | m.getMaterialRGB();
-            } catch (Throwable ignored) {}
-        }
-        return 0xFFFFFFFF;
-    }
-
     @NotNull
     String getRequiredCoolantMaterialId();
 
     @NotNull
-    default Material getRequiredCoolantMaterial() {
-        String id = getRequiredCoolantMaterialId();
-
-        Material resolvedMat = GTMaterials.get(id);
-
-        if (resolvedMat == null || resolvedMat == GTMaterials.NULL) {
-            resolvedMat = PhoenixMaterialRegistry.getMaterial(id);
-        }
-
-        return resolvedMat != null ? resolvedMat : GTMaterials.NULL;
+    default String getOutputCoolantFluidId() {
+        return getRequiredCoolantMaterialId();
     }
 
-    int getCoolantUsagePerTick(); // NEW ABSTRACT METHOD
+    @NotNull
+    default String getInputCoolantFluidId() {
+        return getRequiredCoolantMaterialId();
+    }
+
+    /**
+     * How much coolant is consumed per tick (mB/t).
+     */
+    int getCoolantUsagePerTick();
 
     default int getCoolantPerTick() {
         return getCoolantUsagePerTick();
+    }
+
+    default int getTintColor() {
+        return 0xFFFFFFFF;
     }
 
     Material getMaterial();

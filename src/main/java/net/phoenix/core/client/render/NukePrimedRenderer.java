@@ -1,8 +1,5 @@
 package net.phoenix.core.client.render;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
-import com.mojang.math.Axis;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -13,10 +10,13 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.phoenix.core.PhoenixFission;
+import net.phoenix.core.common.block.PhoenixFissionBlocks;
 import net.phoenix.core.common.block.entity.NukePrimedEntity;
+
+import com.mojang.blaze3d.vertex.*;
+import com.mojang.math.Axis;
 import org.jetbrains.annotations.NotNull;
 
 public class NukePrimedRenderer extends EntityRenderer<NukePrimedEntity> {
@@ -35,7 +35,6 @@ public class NukePrimedRenderer extends EntityRenderer<NukePrimedEntity> {
     @Override
     public void render(NukePrimedEntity e, float entityYaw, float partialTicks,
                        @NotNull PoseStack ps, @NotNull MultiBufferSource buffer, int packedLight) {
-
         int fuse = e.getFuse();
         float fuseF = fuse - partialTicks;
 
@@ -60,7 +59,7 @@ public class NukePrimedRenderer extends EntityRenderer<NukePrimedEntity> {
         }
 
         // Strobe: last 3 seconds
-        boolean flash = fuseF < 60.0f && ((int)(fuseF / 2) % 2 == 0);
+        boolean flash = fuseF < 60.0f && ((int) (fuseF / 2) % 2 == 0);
 
         ps.pushPose();
 
@@ -75,17 +74,15 @@ public class NukePrimedRenderer extends EntityRenderer<NukePrimedEntity> {
         // Render the "device" as a block (you can swap to your own blockstate later)
         ps.pushPose();
         ps.translate(-0.5D, 0.0D, -0.5D);
-        BlockState state = Blocks.TNT.defaultBlockState();
+        BlockState state = PhoenixFissionBlocks.NUKE_BLOCK.getDefaultState();
         blockRenderer.renderSingleBlock(state, ps, buffer, packedLight,
                 flash ? OverlayTexture.pack(OverlayTexture.u(1.0F), 10) : OverlayTexture.NO_OVERLAY);
         ps.popPose();
 
         ps.popPose();
 
-        // Add a billboard glow sprite (camera-facing quad)
         renderBillboardGlow(e, partialTicks, ps, buffer, danger, pulseStrong, flash);
 
-        // Add ground shockwave ring that expands
         renderShockwaveRing(e, partialTicks, ps, buffer, danger);
 
         super.render(e, entityYaw, partialTicks, ps, buffer, packedLight);
@@ -93,7 +90,6 @@ public class NukePrimedRenderer extends EntityRenderer<NukePrimedEntity> {
 
     private void renderBillboardGlow(NukePrimedEntity e, float partialTicks, PoseStack ps, MultiBufferSource buffer,
                                      float danger, float pulseStrong, boolean flash) {
-
         float alpha = Mth.clamp(0.15f + danger * 0.65f + pulseStrong * 0.35f, 0.0f, 1.0f);
         if (flash) alpha = 1.0f;
 
@@ -102,7 +98,6 @@ public class NukePrimedRenderer extends EntityRenderer<NukePrimedEntity> {
         ps.pushPose();
         ps.translate(0.0D, 1.0D, 0.0D);
 
-        // Face camera
         Camera cam = Minecraft.getInstance().gameRenderer.getMainCamera();
         ps.mulPose(cam.rotation());
 
@@ -111,14 +106,13 @@ public class NukePrimedRenderer extends EntityRenderer<NukePrimedEntity> {
         VertexConsumer vc = buffer.getBuffer(RenderType.entityTranslucent(GLOW));
         PoseStack.Pose p = ps.last();
 
-        // Quad centered at origin
         addQuad(vc, p, alpha);
 
         ps.popPose();
     }
 
-    private void renderShockwaveRing(NukePrimedEntity e, float partialTicks, PoseStack ps, MultiBufferSource buffer, float danger) {
-        // Expanding ring; starts subtle then gets huge near end
+    private void renderShockwaveRing(NukePrimedEntity e, float partialTicks, PoseStack ps, MultiBufferSource buffer,
+                                     float danger) {
         float t = Mth.clamp(danger, 0.0f, 1.0f);
         float radius = 0.5f + t * 10.0f;          // expand outward
         float alpha = (1.0f - t) * 0.25f + t * 0.55f;
@@ -132,18 +126,20 @@ public class NukePrimedRenderer extends EntityRenderer<NukePrimedEntity> {
         VertexConsumer vc = buffer.getBuffer(RenderType.entityTranslucent(RING));
         PoseStack.Pose p = ps.last();
 
-        // Flat quad (ring texture should be transparent in the middle)
         addQuad(vc, p, alpha);
 
         ps.popPose();
     }
 
     private static void addQuad(VertexConsumer vc, PoseStack.Pose p, float a) {
-        // No custom colors specified; using white with alpha (still “no color choice” in code)
-        vc.vertex(p.pose(), -0.5f, -0.5f, 0.0f).color(255, 255, 255, (int)(a * 255)).uv(0, 1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(0xF000F0).normal(p.normal(), 0, 0, 1).endVertex();
-        vc.vertex(p.pose(),  0.5f, -0.5f, 0.0f).color(255, 255, 255, (int)(a * 255)).uv(1, 1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(0xF000F0).normal(p.normal(), 0, 0, 1).endVertex();
-        vc.vertex(p.pose(),  0.5f,  0.5f, 0.0f).color(255, 255, 255, (int)(a * 255)).uv(1, 0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(0xF000F0).normal(p.normal(), 0, 0, 1).endVertex();
-        vc.vertex(p.pose(), -0.5f,  0.5f, 0.0f).color(255, 255, 255, (int)(a * 255)).uv(0, 0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(0xF000F0).normal(p.normal(), 0, 0, 1).endVertex();
+        vc.vertex(p.pose(), -0.5f, -0.5f, 0.0f).color(255, 255, 255, (int) (a * 255)).uv(0, 1)
+                .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(0xF000F0).normal(p.normal(), 0, 0, 1).endVertex();
+        vc.vertex(p.pose(), 0.5f, -0.5f, 0.0f).color(255, 255, 255, (int) (a * 255)).uv(1, 1)
+                .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(0xF000F0).normal(p.normal(), 0, 0, 1).endVertex();
+        vc.vertex(p.pose(), 0.5f, 0.5f, 0.0f).color(255, 255, 255, (int) (a * 255)).uv(1, 0)
+                .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(0xF000F0).normal(p.normal(), 0, 0, 1).endVertex();
+        vc.vertex(p.pose(), -0.5f, 0.5f, 0.0f).color(255, 255, 255, (int) (a * 255)).uv(0, 0)
+                .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(0xF000F0).normal(p.normal(), 0, 0, 1).endVertex();
     }
 
     @Override

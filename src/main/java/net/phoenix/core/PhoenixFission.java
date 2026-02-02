@@ -61,7 +61,7 @@ public class PhoenixFission {
                                     REGISTRATE))
                             .title(REGISTRATE.addLang("itemGroup", PhoenixFission.id("creative_tab"),
                                     "Phoenix's Fission"))
-                            .icon(PhoenixFissionMachines.ADVANCED_PRESSURIZED_FISSION_REACTOR::asStack)
+                            .icon(PhoenixFissionMachines.PRESSURIZED_FISSION_REACTOR::asStack)
                             .build())
             .register();
 

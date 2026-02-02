@@ -1,7 +1,6 @@
 package net.phoenix.core.client;
 
 import net.minecraft.client.renderer.entity.EntityRenderers;
-import net.minecraft.client.renderer.entity.TntRenderer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -14,6 +13,7 @@ import net.phoenix.core.common.registry.PhoenixFissionEntities;
 public class PhoenixClient {
 
     private PhoenixClient() {}
+
     @SubscribeEvent
     public static void onClientSetup(final FMLClientSetupEvent event) {
         event.enqueueWork(() -> {

@@ -2,9 +2,9 @@ package net.phoenix.core.common.block;
 
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.block.ActiveBlock;
+import com.gregtechceu.gtceu.api.data.chemical.material.Material;
+import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.utils.GTUtil;
-
-import lombok.Getter;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -18,15 +18,16 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.registries.ForgeRegistries;
-
 import net.phoenix.core.PhoenixFission;
 import net.phoenix.core.api.block.IFissionFuelRodType;
 
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.List;
+
+import javax.annotation.ParametersAreNonnullByDefault;
 
 @Getter
 @ParametersAreNonnullByDefault
@@ -46,7 +47,7 @@ public class FissionFuelRodBlock extends ActiveBlock {
     public void appendHoverText(ItemStack stack, @Nullable BlockGetter level,
                                 List<Component> tooltip, TooltipFlag flag) {
         if (!GTUtil.isShiftDown()) {
-            tooltip.add(Component.translatable("gtceu.tooltip.item_details_shift")
+            tooltip.add(Component.literal("Hold §fShift§7 for details")
                     .withStyle(ChatFormatting.GRAY));
             return;
         }
@@ -57,16 +58,21 @@ public class FissionFuelRodBlock extends ActiveBlock {
                 .withStyle(ChatFormatting.AQUA));
 
         tooltip.add(Component.translatable("phoenix.fission.heat_production",
-                        Component.literal(String.valueOf(fuelRodType.getBaseHeatProduction()))
-                                .withStyle(ChatFormatting.RED))
+                Component.literal(String.valueOf(fuelRodType.getBaseHeatProduction()))
+                        .withStyle(ChatFormatting.RED))
                 .append(Component.literal(" HU/t").withStyle(ChatFormatting.GRAY)));
 
         double seconds = fuelRodType.getDurationTicks() / 20.0;
         tooltip.add(Component.translatable("phoenix.fission.fuel_cycle",
-                        Component.literal(String.valueOf(fuelRodType.getAmountPerCycle()))
-                                .withStyle(ChatFormatting.WHITE),
-                        Component.literal(String.format("%.2f", seconds))
-                                .withStyle(ChatFormatting.GOLD))
+                Component.literal(String.valueOf(fuelRodType.getAmountPerCycle()))
+                        .withStyle(ChatFormatting.WHITE),
+                Component.literal(String.format("%.2f", seconds))
+                        .withStyle(ChatFormatting.GOLD))
+                .withStyle(ChatFormatting.GRAY));
+
+        tooltip.add(Component.translatable("phoenix.fission.depleted_fuel",
+                Component.literal(String.valueOf(fuelRodType.getOutputKey()))
+                        .withStyle(ChatFormatting.WHITE))
                 .withStyle(ChatFormatting.GRAY));
 
         tooltip.add(Component.translatable("gtceu.tooltip.tier",
@@ -99,26 +105,40 @@ public class FissionFuelRodBlock extends ActiveBlock {
 
     public enum FissionFuelRodTypes implements StringRepresentable, IFissionFuelRodType {
 
-        // NOTE: fuelKey is a REGISTRY ID now (item or fluid)
         URANIUM("uranium_fuel_rod",
-                50, 1,
+                500, 1,
                 1200, 1,
                 "gtceu:uranium_nugget",
+                "gtceu:plutonium_nugget",
                 0xFF7DE7FF);
 
-        @Getter @NotNull private final String name;
-        @Getter private final int baseHeatProduction;
-        @Getter private final int tier;
-        @Getter private final int durationTicks;
-        @Getter private final int amountPerCycle;
-        @Getter @NotNull private final String fuelKey;
-        @Getter @NotNull private final ResourceLocation texture;
+        @Getter
+        @NotNull
+        private final String name;
+        @Getter
+        private final int baseHeatProduction;
+        @Getter
+        private final int tier;
+        @Getter
+        private final int durationTicks;
+        @Getter
+        private final int amountPerCycle;
+        @Getter
+        @NotNull
+        private final String fuelKey;
+        @Getter
+        @NotNull
+        private final ResourceLocation texture;
+        @Getter
+        @NotNull
+        private final String outputKey;
 
         /** Case-by-case ARGB tint. Packdevs choose this. */
-        @Getter private final int tintColor;
+        @Getter
+        private final int tintColor;
 
         FissionFuelRodTypes(String name, int heat, int tier, int duration, int amount,
-                            String fuelKey, int tintColor) {
+                            String fuelKey, String outputKey, int tintColor) {
             this.name = name;
             this.baseHeatProduction = heat;
             this.tier = tier;
@@ -127,6 +147,7 @@ public class FissionFuelRodBlock extends ActiveBlock {
             this.fuelKey = fuelKey;
             this.texture = PhoenixFission.id("block/fission/fuel_rod/" + name);
             this.tintColor = tintColor;
+            this.outputKey = outputKey;
         }
 
         @Override
@@ -140,8 +161,8 @@ public class FissionFuelRodBlock extends ActiveBlock {
         }
 
         @Override
-        public com.gregtechceu.gtceu.api.data.chemical.material.Material getMaterial() {
-            return com.gregtechceu.gtceu.common.data.GTMaterials.NULL; // not used for IO anymore
+        public Material getMaterial() {
+            return GTMaterials.NULL;
         }
     }
 }

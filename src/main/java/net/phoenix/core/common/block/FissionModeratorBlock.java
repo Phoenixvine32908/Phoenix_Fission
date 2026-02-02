@@ -3,8 +3,6 @@ package net.phoenix.core.common.block;
 import com.gregtechceu.gtceu.api.block.ActiveBlock;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
-import lombok.Getter;
-
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -12,15 +10,16 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.BlockGetter;
-
 import net.phoenix.core.PhoenixFission;
 import net.phoenix.core.api.block.IFissionModeratorType;
 
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.List;
+
+import javax.annotation.ParametersAreNonnullByDefault;
 
 @Getter
 @ParametersAreNonnullByDefault
@@ -60,14 +59,22 @@ public class FissionModeratorBlock extends ActiveBlock {
                 PhoenixFission.id("block/fission/graphite_moderator"),
                 0xFFB07CFF);
 
-        @Getter @NotNull private final String name;
-        @Getter private final int EUBoost;
-        @Getter private final int fuelDiscount;
-        @Getter private final int tier;
-        @Getter @NotNull private final ResourceLocation texture;
+        @Getter
+        @NotNull
+        private final String name;
+        @Getter
+        private final int EUBoost;
+        @Getter
+        private final int fuelDiscount;
+        @Getter
+        private final int tier;
+        @Getter
+        @NotNull
+        private final ResourceLocation texture;
 
         /** Per-type tint (ARGB) */
-        @Getter private final int tintColor;
+        @Getter
+        private final int tintColor;
 
         FissionModeratorTypes(String name, int EUBoost, int fuelDiscount, int tier,
                               ResourceLocation texture, int tintColor) {

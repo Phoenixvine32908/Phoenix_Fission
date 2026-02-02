@@ -16,16 +16,18 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.network.NetworkHooks;
 import net.phoenix.core.configs.PhoenixConfigs;
+
 import org.jetbrains.annotations.Nullable;
 
 public class NukePrimedEntity extends Entity {
 
-    private static final EntityDataAccessor<Integer> DATA_FUSE =
-            SynchedEntityData.defineId(NukePrimedEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Integer> DATA_RADIUS =
-            SynchedEntityData.defineId(NukePrimedEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_FUSE = SynchedEntityData.defineId(NukePrimedEntity.class,
+            EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_RADIUS = SynchedEntityData.defineId(NukePrimedEntity.class,
+            EntityDataSerializers.INT);
 
-    @Nullable private LivingEntity owner;
+    @Nullable
+    private LivingEntity owner;
 
     private boolean wiping = false;
     private int wipeIndex = 0;
@@ -42,18 +44,23 @@ public class NukePrimedEntity extends Entity {
         this.entityData.define(DATA_RADIUS, 16);
     }
 
-    public void setOwner(@Nullable LivingEntity owner) { this.owner = owner; }
-    public void setFuse(int ticks) { this.entityData.set(DATA_FUSE, Math.max(1, ticks)); }
+    public void setOwner(@Nullable LivingEntity owner) {
+        this.owner = owner;
+    }
+
+    public void setFuse(int ticks) {
+        this.entityData.set(DATA_FUSE, Math.max(1, ticks));
+    }
 
     public void setRadius(int r) {
         var cfg = PhoenixConfigs.INSTANCE.fission;
         int cap = Math.max(1, cfg.nukeCubeRadiusCap);
         this.entityData.set(DATA_RADIUS, Mth.clamp(r, 1, cap));
     }
+
     public int getFuse() {
         return this.entityData.get(DATA_FUSE);
     }
-
 
     @Override
     public void tick() {
@@ -62,7 +69,10 @@ public class NukePrimedEntity extends Entity {
         if (level().isClientSide) return;
 
         var cfg = PhoenixConfigs.INSTANCE.fission;
-        if (!cfg.nukeEnabled) { discard(); return; }
+        if (!cfg.nukeEnabled) {
+            discard();
+            return;
+        }
 
         if (!wiping) {
             int fuse = entityData.get(DATA_FUSE) - 1;
@@ -110,7 +120,6 @@ public class NukePrimedEntity extends Entity {
             BlockState st = level().getBlockState(mpos);
             if (st.isAir()) continue;
 
-            // minimal "protected" examples
             if (st.is(Blocks.BEDROCK) || st.is(Blocks.END_PORTAL_FRAME)) continue;
 
             if (skipBE && level().getBlockEntity(mpos) != null) continue;
@@ -145,4 +154,3 @@ public class NukePrimedEntity extends Entity {
         return NetworkHooks.getEntitySpawningPacket(this);
     }
 }
-

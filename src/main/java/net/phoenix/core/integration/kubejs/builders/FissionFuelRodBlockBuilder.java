@@ -29,10 +29,17 @@ public class FissionFuelRodBlockBuilder extends BlockBuilder {
     @Setter
     public transient int amountPerCycle = 1;
 
+    /**
+     * Fuel item registry id (Forge item id).
+     * Example: "gtceu:uranium_235_nugget"
+     *
+     * (Legacy name kept: getFuelKey()).
+     */
     @Setter
     @NotNull
-    public transient String fuelKey = "gtceu:uranium";
+    public transient String fuelKey = "gtceu:uranium_235_nugget";
 
+    /** Legacy hook only. Don’t rely on it for IO/tint anymore. */
     @NotNull
     public transient Supplier<Material> material = () -> GTMaterials.NULL;
 
@@ -44,7 +51,7 @@ public class FissionFuelRodBlockBuilder extends BlockBuilder {
     @Setter
     public transient String maskTexture = "phoenix_fission:block/fission/masks/fuel_rod_mask";
 
-    /** Optional active overlay mask (top_all) when ACTIVE=true (emissive/glow if you wire it) */
+    /** Optional active overlay mask (top_all) when ACTIVE=true */
     @Setter
     public transient String activeMaskTexture = "phoenix_fission:block/fission/masks/fuel_rod_mask_active";
 
@@ -65,9 +72,12 @@ public class FissionFuelRodBlockBuilder extends BlockBuilder {
 
     private class KjsFuelRodType implements IFissionFuelRodType, StringRepresentable {
 
-        private final ResourceLocation baseTextureLocation = new ResourceLocation(texture);
-        private final ResourceLocation maskTextureLocation = new ResourceLocation(maskTexture);
-        private final ResourceLocation activeMaskTextureLocation = new ResourceLocation(activeMaskTexture);
+        private final ResourceLocation baseTextureLocation = safeRL(texture,
+                new ResourceLocation("phoenix_fission", "block/fission/fuel_rod/missing"));
+        private final ResourceLocation maskTextureLocation = safeRL(maskTexture,
+                new ResourceLocation("phoenix_fission", "block/fission/masks/fuel_rod_mask"));
+        private final ResourceLocation activeMaskTextureLocation = safeRL(activeMaskTexture,
+                new ResourceLocation("phoenix_fission", "block/fission/masks/fuel_rod_mask_active"));
 
         @Override
         public @NotNull String getSerializedName() {
@@ -81,59 +91,71 @@ public class FissionFuelRodBlockBuilder extends BlockBuilder {
 
         @Override
         public int getBaseHeatProduction() {
-            return baseHeatProduction;
+            return Math.max(0, baseHeatProduction);
+        }
+
+        /**
+         * Legacy method name – but now treated as an ITEM registry id.
+         */
+        @Override
+        public @NotNull String getFuelKey() {
+            return fuelKey == null ? "" : fuelKey;
         }
 
         @Override
-        public @NotNull String getFuelKey() {
-            return fuelKey;
+        public @NotNull String getOutputKey() {
+            return "";
         }
 
         @Override
         public int getDurationTicks() {
-            return durationTicks;
+            return Math.max(1, durationTicks);
         }
 
         @Override
         public int getAmountPerCycle() {
-            return amountPerCycle;
+            return Math.max(0, amountPerCycle);
         }
 
         @Override
         public int getTier() {
-            return tier;
+            return Math.max(0, tier);
         }
 
         @Override
         public @NotNull Material getMaterial() {
-            return material.get();
+            // keep interface satisfied, but don’t rely on it for IO/tint
+            return GTMaterials.NULL;
         }
 
         @Override
         public @NotNull ResourceLocation getTexture() {
-            // Base texture for bot_all
             return baseTextureLocation;
         }
 
-        /** OPTIONAL: if you add this to IFissionFuelRodType, tint becomes unified */
+        /**
+         * If IFissionFuelRodType has getTintColor(), add @Override.
+         * If it doesn’t, your color handler must explicitly read it (instance check/reflection),
+         * or you should add it to the interface like coolers.
+         */
         public int getTintColor() {
             if (tintColor != -1) return tintColor;
 
-            return switch (tier) {
-                case 1 -> 0xFF7DE7FF; // cyan-ish
-                case 2 -> 0xFFB07CFF; // purple-ish
-                case 3 -> 0xFFFFD27D; // gold-ish
-                case 4 -> 0xFFFF7DAA; // pink-ish
+            return switch (getTier()) {
+                case 1 -> 0xFF7DE7FF;
+                case 2 -> 0xFFB07CFF;
+                case 3 -> 0xFFFFD27D;
+                case 4 -> 0xFFFF7DAA;
                 default -> 0xFFFFFFFF;
             };
         }
 
-        /** NEW: overlay mask for tinted model (inactive) */
+        /** Not in IFissionFuelRodType unless you add it. */
         public @NotNull ResourceLocation getMaskTexture() {
             return maskTextureLocation;
         }
 
-        /** NEW: overlay mask for tinted model (active) */
+        /** Not in IFissionFuelRodType unless you add it. */
         public @NotNull ResourceLocation getActiveMaskTexture() {
             return activeMaskTextureLocation;
         }
@@ -145,5 +167,11 @@ public class FissionFuelRodBlockBuilder extends BlockBuilder {
         FissionFuelRodBlock result = new FissionFuelRodBlock(this.createProperties(), type);
         PhoenixAPI.FISSION_FUEL_RODS.put(type, () -> result);
         return result;
+    }
+
+    private static ResourceLocation safeRL(String s, ResourceLocation fallback) {
+        if (s == null || s.isEmpty()) return fallback;
+        ResourceLocation rl = ResourceLocation.tryParse(s);
+        return rl != null ? rl : fallback;
     }
 }

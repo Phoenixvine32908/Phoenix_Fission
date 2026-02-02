@@ -16,7 +16,6 @@ public class FissionExplosionTask {
 
     private static final BlockState AIR = Blocks.AIR.defaultBlockState();
 
-    // Configuration for the tick budget
     private static final long WORK_NANOS_PER_TICK = 100_000_000L; // 100ms budget per tick
     private static final long WORK_NANOS_IMMEDIATE = 100_000_000L;
     private static final int FLUSH_EVERY_TICKS = 2;
@@ -57,7 +56,6 @@ public class FissionExplosionTask {
 
     private final List<ChunkPos> chunkOrder;
 
-    // Base constructor (called by FissionExplosionManager.start)
     public FissionExplosionTask(ServerLevel level, BlockPos center, int radiusBlocks) {
         this(level, UUID.randomUUID(), center, radiusBlocks, null);
     }

@@ -21,32 +21,30 @@ import java.util.function.Supplier;
 public class FissionBlanketRodBlockBuilder extends BlockBuilder {
 
     @Setter
-    public transient int tier = 1, durationTicks = 1200, amountPerCycle = 1;
+    public transient int tier = 1;
+    @Setter
+    public transient int durationTicks = 1200;
+    @Setter
+    public transient int amountPerCycle = 1;
 
     @NotNull
     public transient Supplier<Material> material = () -> GTMaterials.NULL;
 
-    /** Base (bot_all) texture */
+    /** Base texture */
     @Setter
     public transient String texture = "phoenix_fission:block/fission/blanket/missing";
 
-    /**
-     * Overlay mask (top_all) texture used for tinting.
-     * Should be a neutral (white/gray) mask PNG with transparency.
-     */
+    /** Overlay tint mask texture */
     @Setter
     public transient String maskTexture = "phoenix_fission:block/fission/masks/blanket_mask";
 
-    /** Required for breeder logic */
+    /** Key can be: GT material id OR item id OR fluid id */
     @Setter
     public transient String inputKey = "gtceu:uranium_238_nugget";
     @Setter
     public transient String outputKey = "gtceu:plutonium_nugget";
 
-    /**
-     * Tint color (ARGB). If left at -1, it can be derived from material or tier.
-     * Example: 0xFFRRGGBB
-     */
+    /** Tint color ARGB. -1 = auto */
     @Setter
     public transient int tintColor = -1;
 
@@ -63,8 +61,13 @@ public class FissionBlanketRodBlockBuilder extends BlockBuilder {
 
     private class KjsBlanketType implements IFissionBlanketType, StringRepresentable {
 
-        private final ResourceLocation baseTextureLocation = new ResourceLocation(texture);
-        private final ResourceLocation maskTextureLocation = new ResourceLocation(maskTexture);
+        private final ResourceLocation baseTextureLocation = ResourceLocation.tryParse(texture) != null ?
+                new ResourceLocation(texture) :
+                new ResourceLocation("phoenix_fission", "block/fission/blanket/missing");
+
+        private final ResourceLocation maskTextureLocation = ResourceLocation.tryParse(maskTexture) != null ?
+                new ResourceLocation(maskTexture) :
+                new ResourceLocation("phoenix_fission", "block/fission/masks/blanket_mask");
 
         @Override
         public @NotNull String getSerializedName() {
@@ -78,50 +81,46 @@ public class FissionBlanketRodBlockBuilder extends BlockBuilder {
 
         @Override
         public int getDurationTicks() {
-            return durationTicks;
+            return Math.max(1, durationTicks);
         }
 
         @Override
         public int getAmountPerCycle() {
-            return amountPerCycle;
+            return Math.max(0, amountPerCycle);
         }
 
         @Override
         public @NotNull String getInputKey() {
-            return inputKey;
+            return inputKey == null ? "" : inputKey;
         }
 
         @Override
         public @NotNull String getOutputKey() {
-            return outputKey;
+            return outputKey == null ? "" : outputKey;
         }
 
         @Override
         public int getTier() {
-            return tier;
+            return Math.max(0, tier);
         }
 
         @Override
         public @NotNull Material getMaterial() {
-            return material.get();
+            Material m = material.get();
+            return (m == null) ? GTMaterials.NULL : m;
         }
 
         @Override
         public @NotNull ResourceLocation getTexture() {
-            // Keep this as the BASE texture for your datagen (bot_all)
             return baseTextureLocation;
         }
 
-        /**
-         * OPTIONAL: if you add this to IFissionBlanketType, your tint system can be unified.
-         * If you don't want to edit the interface, you can still read tint via instance checks
-         * in your color handler.
-         */
+        // Expose for your color handler + model gen via reflection/instance checks
         public int getTintColor() {
             if (tintColor != -1) return tintColor;
 
-            // Best-effort: tint from tier (stable, no GTCEu API dependence)
-            return switch (tier) {
+            // Tier-based fallback (stable)
+            return switch (getTier()) {
                 case 1 -> 0xFFB07CFF;
                 case 2 -> 0xFFFFD27D;
                 case 3 -> 0xFF7DE7FF;
@@ -130,7 +129,6 @@ public class FissionBlanketRodBlockBuilder extends BlockBuilder {
             };
         }
 
-        /** NEW: expose mask texture for model generation (if you choose to use it) */
         public @NotNull ResourceLocation getMaskTexture() {
             return maskTextureLocation;
         }

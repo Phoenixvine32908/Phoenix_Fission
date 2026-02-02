@@ -21,12 +21,13 @@ import java.util.function.Supplier;
 public class FissionModeratorBlockBuilder extends BlockBuilder {
 
     @Setter
-    public transient int EUBoost = 1;
+    public transient int euBoost = 1;
     @Setter
     public transient int fuelDiscount = 1;
     @Setter
     public transient int tier = 1;
 
+    /** Legacy hook only. Don’t rely on it for tint/IO. */
     @NotNull
     public transient Supplier<Material> material = () -> GTMaterials.NULL;
 
@@ -55,8 +56,12 @@ public class FissionModeratorBlockBuilder extends BlockBuilder {
 
     private class KjsModeratorType implements IFissionModeratorType, StringRepresentable {
 
-        private final ResourceLocation baseTextureLocation = new ResourceLocation(texture);
-        private final ResourceLocation maskTextureLocation = new ResourceLocation(maskTexture);
+        private final ResourceLocation baseTextureLocation = safeRL(
+                texture,
+                new ResourceLocation("phoenix_fission", "block/fission/moderator/missing"));
+        private final ResourceLocation maskTextureLocation = safeRL(
+                maskTexture,
+                new ResourceLocation("phoenix_fission", "block/fission/masks/moderator_mask"));
 
         @Override
         public @NotNull String getSerializedName() {
@@ -70,22 +75,25 @@ public class FissionModeratorBlockBuilder extends BlockBuilder {
 
         @Override
         public int getEUBoost() {
-            return EUBoost;
+            // negative boost makes no sense
+            return Math.max(0, euBoost);
         }
 
         @Override
         public int getFuelDiscount() {
-            return fuelDiscount;
+            // clamp to [0, 100] by default; your machine code also clamps with config max
+            return clamp(fuelDiscount, 0, 100);
         }
 
         @Override
         public int getTier() {
-            return tier;
+            return Math.max(0, tier);
         }
 
         @Override
         public @NotNull Material getMaterial() {
-            return material.get();
+            // keep interface satisfied; avoid depending on material-based tinting
+            return GTMaterials.NULL;
         }
 
         @Override
@@ -94,11 +102,14 @@ public class FissionModeratorBlockBuilder extends BlockBuilder {
             return baseTextureLocation;
         }
 
-        /** OPTIONAL: if you add this to IFissionModeratorType, tint becomes unified */
+        /**
+         * If IFissionModeratorType has getTintColor(), add @Override.
+         * Otherwise your color handler must explicitly read it.
+         */
         public int getTintColor() {
             if (tintColor != -1) return tintColor;
 
-            return switch (tier) {
+            return switch (getTier()) {
                 case 1 -> 0xFF7DE7FF;
                 case 2 -> 0xFFB07CFF;
                 case 3 -> 0xFFFFD27D;
@@ -107,7 +118,7 @@ public class FissionModeratorBlockBuilder extends BlockBuilder {
             };
         }
 
-        /** NEW: overlay mask for tinted model */
+        /** Not in IFissionModeratorType unless you add it. */
         public @NotNull ResourceLocation getMaskTexture() {
             return maskTextureLocation;
         }
@@ -119,5 +130,15 @@ public class FissionModeratorBlockBuilder extends BlockBuilder {
         FissionModeratorBlock result = new FissionModeratorBlock(this.createProperties(), type);
         PhoenixAPI.FISSION_MODERATORS.put(type, () -> result);
         return result;
+    }
+
+    private static ResourceLocation safeRL(String s, ResourceLocation fallback) {
+        if (s == null || s.isEmpty()) return fallback;
+        ResourceLocation rl = ResourceLocation.tryParse(s);
+        return rl != null ? rl : fallback;
+    }
+
+    private static int clamp(int v, int min, int max) {
+        return Math.max(min, Math.min(max, v));
     }
 }

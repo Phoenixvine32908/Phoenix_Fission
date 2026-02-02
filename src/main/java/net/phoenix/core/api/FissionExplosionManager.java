@@ -17,7 +17,6 @@ public class FissionExplosionManager {
 
     private static final List<FissionExplosionTask> ACTIVE = new ArrayList<>();
 
-    // Uses the new persistent WorldData class
     private static FissionExplosionWorldData data(ServerLevel level) {
         return level.getDataStorage().computeIfAbsent(
                 FissionExplosionWorldData::load,
@@ -25,7 +24,6 @@ public class FissionExplosionManager {
                 FissionExplosionWorldData.NAME);
     }
 
-    // Loads saved tasks when the world starts
     @SubscribeEvent
     public static void onLevelLoad(LevelEvent.Load event) {
         if (!(event.getLevel() instanceof ServerLevel lvl)) return;
@@ -40,7 +38,6 @@ public class FissionExplosionManager {
         }
     }
 
-    // Saves unfinished tasks when the world unloads
     @SubscribeEvent
     public static void onLevelUnload(LevelEvent.Unload event) {
         if (!(event.getLevel() instanceof ServerLevel lvl)) return;
@@ -73,11 +70,9 @@ public class FissionExplosionManager {
         data(level).put(new FissionExplosionWorldData.Entry(
                 task.getId(), task.getCenter(), task.getRadiusBlocks(), task.exportProcessedChunks()));
 
-        // Runs a small amount of work immediately to start the process
         task.tickImmediate();
     }
 
-    // Ensures tasks are added to the work queue when chunks load
     @SubscribeEvent
     public static void onChunkLoad(ChunkEvent.Load event) {
         if (!(event.getLevel() instanceof ServerLevel lvl)) return;
@@ -91,7 +86,6 @@ public class FissionExplosionManager {
         }
     }
 
-    // Ticks all active tasks every server tick (The actual scheduler)
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
@@ -107,10 +101,8 @@ public class FissionExplosionManager {
                 continue;
             }
 
-            // Executes work based on a fixed time budget
             task.tick();
 
-            // Persists progress when the task reports it's dirty
             if (task.consumePersistDirty()) {
                 data(task.getLevel()).put(new FissionExplosionWorldData.Entry(
                         task.getId(), task.getCenter(), task.getRadiusBlocks(), task.exportProcessedChunks()));

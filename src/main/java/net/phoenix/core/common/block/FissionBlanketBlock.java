@@ -1,9 +1,8 @@
 package net.phoenix.core.common.block;
 
 import com.gregtechceu.gtceu.api.block.ActiveBlock;
+import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 import com.gregtechceu.gtceu.utils.GTUtil;
-
-import lombok.Getter;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -12,14 +11,15 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.BlockGetter;
-
 import net.phoenix.core.api.block.IFissionBlanketType;
 
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.List;
+
+import javax.annotation.ParametersAreNonnullByDefault;
 
 @Getter
 @ParametersAreNonnullByDefault
@@ -38,13 +38,14 @@ public class FissionBlanketBlock extends ActiveBlock {
     @Override
     public void appendHoverText(ItemStack stack, @Nullable BlockGetter level,
                                 List<Component> tooltip, TooltipFlag flag) {
+        tooltip.add(Component.literal("The heart of breeding fissile materials."));
+
         if (!GTUtil.isShiftDown()) {
-            tooltip.add(Component.translatable("gtceu.tooltip.item_details_shift")
+            tooltip.add(Component.literal("Hold §fShift§7 for details")
                     .withStyle(ChatFormatting.GRAY));
             return;
         }
 
-        // Pure registry display names
         Component inputName = FissionFuelRodBlock.getRegistryDisplayName(blanketType.getInputKey());
         Component outputName = FissionFuelRodBlock.getRegistryDisplayName(blanketType.getOutputKey());
 
@@ -55,11 +56,11 @@ public class FissionBlanketBlock extends ActiveBlock {
 
         double seconds = blanketType.getDurationTicks() / 20.0;
         tooltip.add(Component.translatable(
-                        "phoenix.fission.blanket_cycle",
-                        Component.literal(String.valueOf(blanketType.getAmountPerCycle()))
-                                .withStyle(ChatFormatting.WHITE),
-                        Component.literal(String.format("%.2f", seconds))
-                                .withStyle(ChatFormatting.GOLD))
+                "phoenix.fission.blanket_cycle",
+                Component.literal(String.valueOf(blanketType.getAmountPerCycle()))
+                        .withStyle(ChatFormatting.WHITE),
+                Component.literal(String.format("%.2f", seconds))
+                        .withStyle(ChatFormatting.GOLD))
                 .withStyle(ChatFormatting.GRAY));
     }
 
@@ -72,21 +73,33 @@ public class FissionBlanketBlock extends ActiveBlock {
                 0xFFB07CFF),
 
         THORIUM_BREEDER("thorium_breeder",
-                1, 2400, 1,
-                "gtceu:uranium_238_nugget",
+                1, 240, 1,
+                "gtceu:uranium_235_nugget",
                 "gtceu:plutonium_nugget",
                 0xFFFFD27D);
 
-        @Getter @NotNull private final String name;
-        @Getter private final int tier;
-        @Getter private final int durationTicks;
-        @Getter private final int amountPerCycle;
-        @Getter @NotNull private final String inputKey;
-        @Getter @NotNull private final String outputKey;
-        @Getter @NotNull private final ResourceLocation texture;
+        @Getter
+        @NotNull
+        private final String name;
+        @Getter
+        private final int tier;
+        @Getter
+        private final int durationTicks;
+        @Getter
+        private final int amountPerCycle;
+        @Getter
+        @NotNull
+        private final String inputKey;
+        @Getter
+        @NotNull
+        private final String outputKey;
+        @Getter
+        @NotNull
+        private final ResourceLocation texture;
 
         /** Case-by-case ARGB tint. Packdevs choose this. */
-        @Getter private final int tintColor;
+        @Getter
+        private final int tintColor;
 
         BreederBlanketTypes(String name, int tier, int duration, int amount,
                             String in, String out, int tintColor) {
@@ -111,8 +124,8 @@ public class FissionBlanketBlock extends ActiveBlock {
         }
 
         @Override
-        public com.gregtechceu.gtceu.api.data.chemical.material.Material getMaterial() {
-            return null; // not used for IO anymore
+        public Material getMaterial() {
+            return null;
         }
     }
 }

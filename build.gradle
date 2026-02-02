@@ -205,14 +205,9 @@ dependencies {
     modRuntimeOnly("curse.maven:jade-324717:5390389")
     modCompileOnly("curse.maven:jade-324717:5390389")
 
-    modImplementation "curse.maven:productivebees-377897:5566102"
-   // modImplementation "curse.maven:crazy-ae2-addons-1223804:7250497"
 
 
 // GregTech and dependencies
-    modImplementation "software.bernie.geckolib:geckolib-neoforge-1.20.1:${geckolib_version}"
-    modImplementation "top.theillusivec4.curios:curios-forge:${curios_version}"
-    modImplementation "com.hollingsworth.ars_nouveau:ars_nouveau-${minecraft_version}:${ars_nouveau_version}"
     modImplementation("com.gregtechceu.gtceu:gtceu-${minecraft_version}:${gtceu_version}:slim") { transitive = false }
     modImplementation("com.lowdragmc.ldlib:ldlib-forge-${minecraft_version}:${ldlib_version}") { transitive = false }
     modImplementation("com.tterrag.registrate:Registrate:${registrate_version}")

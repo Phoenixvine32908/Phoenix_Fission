@@ -38,12 +38,17 @@ public class PhoenixFissionBlocks {
                 .build()
                 .register();
     }
+
     public static final BlockEntry<NukeBlock> NUKE_BLOCK = REGISTRATE
-            .block("nuke_block", NukeBlock::new)
-            .initialProperties(() -> Blocks.TNT) // TNT-ish
+            .block("nuke", NukeBlock::new)
+            .initialProperties(() -> Blocks.TNT)
             .properties(p -> p.isValidSpawn((state, level, pos, ent) -> false))
             .blockstate((ctx, prov) -> prov.simpleBlock(ctx.getEntry(),
-                    prov.models().cubeAll(ctx.getName(), PhoenixFission.id("block/nuke_block"))))
+                    prov.models().cubeBottomTop(
+                            ctx.getName(),
+                            PhoenixFission.id("block/nuke_side"),
+                            PhoenixFission.id("block/nuke_bottom"),
+                            PhoenixFission.id("block/nuke_top"))))
             .item(BlockItem::new)
             .build()
             .register();
@@ -90,14 +95,11 @@ public class PhoenixFissionBlocks {
                         p -> new FissionFuelRodBlock(p, type))
                 .initialProperties(() -> Blocks.IRON_BLOCK)
                 .properties(p -> p.isValidSpawn((state, level, pos, ent) -> false))
-                // Assuming you have a model generator for fuel rods in PhoenixFissionMachineModels
                 .blockstate(PhoenixFissionMachineModels.createFuelRodModel(type))
                 .tag(CustomTags.MINEABLE_WITH_CONFIG_VALID_PICKAXE_WRENCH)
                 .item(BlockItem::new)
                 .build()
                 .register();
-
-        // Register into the API map so the multiblock logic can find it
         PhoenixAPI.FISSION_FUEL_RODS.put(type, rod);
         return rod;
     }
@@ -108,13 +110,12 @@ public class PhoenixFissionBlocks {
                         p -> new FissionBlanketBlock(p, type))
                 .initialProperties(() -> Blocks.IRON_BLOCK)
                 .properties(p -> p.isValidSpawn((state, level, pos, ent) -> false))
-                .blockstate(PhoenixFissionMachineModels.createBlanketRodModel(type)) // Linked to model gen below
+                .blockstate(PhoenixFissionMachineModels.createBlanketRodModel(type))
                 .tag(CustomTags.MINEABLE_WITH_CONFIG_VALID_PICKAXE_WRENCH)
                 .item(BlockItem::new)
                 .build()
                 .register();
 
-        // Register into the API map for the Breeder Multiblock pattern
         PhoenixAPI.FISSION_BLANKETS.put(type, blanket);
         return blanket;
     }

@@ -8,13 +8,12 @@ import com.gregtechceu.gtceu.api.machine.feature.IExplosionMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
-
 import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.data.recipe.builder.GTRecipeBuilder;
+
 import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
 import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
 
-import lombok.Getter;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -33,6 +32,7 @@ import net.phoenix.core.api.block.IFissionFuelRodType;
 import net.phoenix.core.api.block.IFissionModeratorType;
 import net.phoenix.core.configs.PhoenixConfigs;
 
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,21 +43,18 @@ import java.util.stream.Collectors;
 
 @MethodsReturnNonnullByDefault
 public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMultiblockMachine
-        implements IExplosionMachine {
-
+                                                      implements IExplosionMachine {
 
     protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
             FissionWorkableElectricMultiblockMachine.class,
-            WorkableElectricMultiblockMachine.MANAGED_FIELD_HOLDER
-    );
+            WorkableElectricMultiblockMachine.MANAGED_FIELD_HOLDER);
     private int debugTick = 0;
 
     private void logEvery20(String msg) {
-        if ((debugTick++ % 20 ) == 0) {
-            PhoenixAPI.LOGGER.info("[FISSION][{}] {}", getPos(), msg);
+        if ((debugTick++ % 20) == 0) {
+            // PhoenixAPI.LOGGER.info("[FISSION][{}] {}", getPos(), msg);
         }
     }
-
 
     @Persisted
     protected int meltdownTimerTicks = -1;
@@ -66,7 +63,6 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
     protected int meltdownTimerMax = 0;
     @Persisted
     protected long continuousBurnTicks = 0;
-
 
     /**
      * Guard to prevent recursion when {@link #doMeltdown()} invalidates the structure.
@@ -83,13 +79,17 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
     @Persisted
     protected double fuelRemainder = 0.0;
 
-    @Persisted @Getter
+    @Persisted
+    @Getter
     protected List<String> persistedCoolerIDs = new ArrayList<>();
-    @Persisted @Getter
+    @Persisted
+    @Getter
     protected List<String> persistedModeratorIDs = new ArrayList<>();
-    @Persisted @Getter
+    @Persisted
+    @Getter
     protected List<String> persistedFuelRodIDs = new ArrayList<>();
-    @Persisted @Getter
+    @Persisted
+    @Getter
     protected List<String> persistedBlanketIDs = new ArrayList<>();
 
     @Getter
@@ -101,18 +101,28 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
     @Getter
     protected transient List<IFissionBlanketType> activeBlankets = new ArrayList<>();
 
-    @Nullable protected transient IFissionCoolerType primaryCoolerType = null;
-    @Nullable protected transient IFissionModeratorType primaryModeratorType = null;
-    @Nullable protected transient IFissionFuelRodType primaryFuelRodType = null;
+    @Nullable
+    protected transient IFissionCoolerType primaryCoolerType = null;
+    @Nullable
+    protected transient IFissionModeratorType primaryModeratorType = null;
+    @Nullable
+    protected transient IFissionFuelRodType primaryFuelRodType = null;
 
-    public int lastRequiredCooling = 0; // optional “target cooling”, you can define however you want now
+    @Persisted
+    public int lastRequiredCooling = 0;
+    @Persisted
     public int lastProvidedCooling = 0;
+    @Persisted
     public boolean lastHasCoolant = true;
-
+    @Persisted
+    public boolean lastHotReturnVoided = false;
+    @Persisted
     public int lastParallels = 1;
-
+    @Persisted
     public long lastGeneratedEUt = 0;
+    @Persisted
     public double lastHeatGainedPerTick = 0.0;
+    @Persisted
     public double lastHeatRemovedPerTick = 0.0;
 
     protected final ConditionalSubscriptionHandler reactorTickHandler;
@@ -148,10 +158,14 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
         this.activeModerators = getListFromContext("ModeratorTypes");
         this.activeFuelRods = getListFromContext("FuelRodTypes");
         this.activeBlankets = getListFromContext("BlanketTypes");
-        this.persistedCoolerIDs = new ArrayList<>(this.activeCoolers.stream().map(IFissionCoolerType::getName).toList());
-        this.persistedModeratorIDs = new ArrayList<>(this.activeModerators.stream().map(IFissionModeratorType::getName).toList());
-        this.persistedFuelRodIDs = new ArrayList<>(this.activeFuelRods.stream().map(IFissionFuelRodType::getName).toList());
-        this.persistedBlanketIDs = new ArrayList<>(this.activeBlankets.stream().map(IFissionBlanketType::getName).toList());
+        this.persistedCoolerIDs = new ArrayList<>(
+                this.activeCoolers.stream().map(IFissionCoolerType::getName).toList());
+        this.persistedModeratorIDs = new ArrayList<>(
+                this.activeModerators.stream().map(IFissionModeratorType::getName).toList());
+        this.persistedFuelRodIDs = new ArrayList<>(
+                this.activeFuelRods.stream().map(IFissionFuelRodType::getName).toList());
+        this.persistedBlanketIDs = new ArrayList<>(
+                this.activeBlankets.stream().map(IFissionBlanketType::getName).toList());
 
         recalcPrimaries();
 
@@ -167,12 +181,12 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
 
     @Override
     public void onStructureInvalid() {
-        // If the reactor is already in an overheat countdown, breaking the multiblock
-        // should be catastrophic ("you were already holding a grenade").
-        // Guarded to avoid recursion because doMeltdown() also invalidates the structure.
-        // Also don't explode if the timer was JUST initialized or is nearly full, to give some leniency
-        // if it was a mis-click or structure flicker.
-        if (!meltdownInProgress && meltdownTimerTicks > 0 && (meltdownTimerMax - meltdownTimerTicks) > 20) {
+        if (!meltdownInProgress && meltdownTimerTicks == 0) {
+            doMeltdown();
+            return;
+        }
+
+        if (heat >= cfg().maxHeatClamp) {
             doMeltdown();
             return;
         }
@@ -222,6 +236,7 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
         this.primaryModeratorType = getPrimaryModerator(this.activeModerators);
         this.primaryFuelRodType = getPrimaryFuelRod(this.activeFuelRods);
     }
+
     /**
      * Runs every tick while formed, regardless of having a GTRecipe.
      */
@@ -229,49 +244,39 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
         if (getLevel() == null || getLevel().isClientSide) return;
         if (!isFormed()) return;
 
-        // keep this fresh even when not running
         lastParallels = Math.max(1, computeParallels());
 
-        boolean running = shouldRunReactor(); // coolant + fuel gate
+        boolean running = shouldRunReactor();
         setMachineActiveSafe(running);
 
         handleReactorLogic(running);
         this.lastRunning = running;
 
-        logEvery20("running=" + running
-                + " heat=" + heat
-                + " gained=" + lastHeatGainedPerTick
-                + " removed=" + lastHeatRemovedPerTick
-                + " cooling=" + lastProvidedCooling
-                + " hasCoolant=" + lastHasCoolant
-                + " parallels=" + lastParallels
-                + " rods=" + activeFuelRods.size());
+        logEvery20("running=" + running + " heat=" + heat + " gained=" + lastHeatGainedPerTick + " removed=" +
+                lastHeatRemovedPerTick + " cooling=" + lastProvidedCooling + " hasCoolant=" + lastHasCoolant +
+                " parallels=" + lastParallels + " rods=" + activeFuelRods.size());
         markDirty();
     }
-
-
 
     protected boolean shouldRunReactor() {
         if (!isFormed()) return false;
         if (activeFuelRods.isEmpty()) return false;
 
-        // Gate coolant using the SAME system you actually consume with
         if (cfg().coolingRequiresCoolant && !activeCoolers.isEmpty()) {
-            boolean ok = canConsumeCoolantForThisTickMachineDriven(); // <-- add this helper (below)
+            boolean ok = canConsumeCoolantForThisTickMachineDriven();
             if (!ok) {
-                PhoenixAPI.LOGGER.info("[FISSION][{}] gate FAIL: no coolant", getPos());
+                // PhoenixAPI.LOGGER.info("[FISSION][{}] gate FAIL: no coolant", getPos());
                 return false;
             }
         }
 
         if (!hasFuelAvailableForNextTick()) {
-            PhoenixAPI.LOGGER.info("[FISSION][{}] gate FAIL: no fuel", getPos());
+            // PhoenixAPI.LOGGER.info("[FISSION][{}] gate FAIL: no fuel", getPos());
             return false;
         }
 
         return true;
     }
-
 
     protected boolean canConsumeCoolantForThisTick() {
         if (!cfg().coolingRequiresCoolant) return true;
@@ -284,31 +289,142 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
             int mb = Math.max(0, primary.getCoolantPerTick());
             if (mb <= 0) return true;
 
-            Material mat = primary.getRequiredCoolantMaterial();
-            if (mat == null || mat == GTMaterials.NULL) return true;
+            String inId = primary.getInputCoolantFluidId();
+            String outId = primary.getOutputCoolantFluidId();
+            if (inId.isEmpty() || "none".equalsIgnoreCase(inId)) return true;
 
-            return canConsumeMaterialFluid(mat, mb);
+            return canConvertCoolant(inId, outId, mb);
         }
 
-        Map<Material, Integer> required = new HashMap<>();
+        Map<String, Integer> required = new HashMap<>();
+        Map<String, String> keyToIn = new HashMap<>();
+        Map<String, String> keyToOut = new HashMap<>();
+
         for (IFissionCoolerType c : activeCoolers) {
             int mb = Math.max(0, c.getCoolantPerTick());
             if (mb <= 0) continue;
 
-            Material mat = c.getRequiredCoolantMaterial();
-            if (mat == null || mat == GTMaterials.NULL) continue;
+            String inId = c.getInputCoolantFluidId();
+            if (inId.isEmpty() || "none".equalsIgnoreCase(inId)) continue;
 
-            required.merge(mat, mb, Integer::sum);
+            String outId = c.getOutputCoolantFluidId();
+            String key = inId + "->" + outId;
+
+            required.merge(key, mb, Integer::sum);
+            keyToIn.putIfAbsent(key, inId);
+            keyToOut.putIfAbsent(key, outId);
         }
 
         for (var e : required.entrySet()) {
-            if (!canConsumeMaterialFluid(e.getKey(), e.getValue())) return false;
+            String key = e.getKey();
+            String inId = keyToIn.get(key);
+            String outId = keyToOut.get(key);
+            if (!canConvertCoolant(inId, outId, e.getValue())) return false;
         }
+
         return true;
     }
 
+    protected void tryOutputFluidId(@NotNull String fluidId, int mb) {
+        if (mb <= 0) return;
 
+        FluidStack fs = resolveFluidStack(fluidId, mb);
+        if (fs.isEmpty()) return;
 
+        GTRecipe dummy = com.gregtechceu.gtceu.data.recipe.builder.GTRecipeBuilder.ofRaw()
+                .outputFluids(fs)
+                .buildRawRecipe();
+
+        // NOTE: Breeder outputs work without a matchRecipe gate.
+        // Some reactor controllers don't "match" an output-only recipe but can still insert into OUT abilities.
+        RecipeHelper.handleRecipeIO(this, dummy, IO.OUT, getRecipeLogic().getChanceCaches());
+    }
+
+    protected void tryOutputItemId(@NotNull String itemId, int items) {
+        if (items <= 0) return;
+
+        ItemStack is = resolveItemStack(itemId, items);
+        if (is.isEmpty()) return;
+
+        GTRecipe dummy = GTRecipeBuilder.ofRaw()
+                .outputItems(is)
+                .buildRawRecipe();
+
+        // Insert directly into OUT abilities (no matchRecipe gate), like fluids do.
+        RecipeHelper.handleRecipeIO(this, dummy, IO.OUT, getRecipeLogic().getChanceCaches());
+    }
+
+    protected boolean canConvertCoolant(@NotNull String inFluidId, @NotNull String outFluidId, int mb) {
+        if (mb <= 0) return true;
+        if (inFluidId.isEmpty() || "none".equalsIgnoreCase(inFluidId)) return true;
+
+        return canConsumeFluidId(inFluidId, mb);
+    }
+
+    protected boolean tryConvertCoolant(@NotNull String inFluidId, @NotNull String outFluidId, int mb) {
+        if (mb <= 0) return true;
+        if (inFluidId.isEmpty() || "none".equalsIgnoreCase(inFluidId)) return true;
+
+        if (!canConsumeFluidId(inFluidId, mb)) return false;
+
+        if (!tryConsumeFluidId(inFluidId, mb)) return false;
+
+        if (!outFluidId.isEmpty() && !"none".equalsIgnoreCase(outFluidId) && !outFluidId.equalsIgnoreCase(inFluidId)) {
+            tryOutputFluidId(outFluidId, mb);
+        }
+
+        return true;
+    }
+
+    /**
+     * Convert a fuel *item* into a product *item* (spent/depleted/etc) using dummy recipes,
+     * so inventory imports/exports (including AE/ME) work.
+     *
+     * IMPORTANT: we intentionally mirror the same "dummy OUT recipe match" gating that tryOutputItemId uses,
+     * otherwise fuel can be consumed but the product is silently not insertable.
+     */
+    protected boolean canConvertFuel(@NotNull String inItemId, @NotNull String outItemId, int count) {
+        if (count <= 0) return true;
+        if (inItemId.isEmpty() || "none".equalsIgnoreCase(inItemId)) return true;
+
+        if (!canConsumeItemKey(inItemId, count)) return false;
+
+        if (outItemId.isEmpty() || "none".equalsIgnoreCase(outItemId) || outItemId.equalsIgnoreCase(inItemId)) {
+            return true;
+        }
+
+        int batch = Math.min(getMaxStackSizeForItemId(outItemId), count);
+        ItemStack out = resolveItemStack(outItemId, batch);
+        if (out.isEmpty()) return false;
+
+        GTRecipe dummy = GTRecipeBuilder.ofRaw()
+                .outputItems(out)
+                .buildRawRecipe();
+
+        return RecipeHelper.matchRecipe(this, dummy).isSuccess();
+    }
+
+    protected boolean tryConvertFuel(@NotNull String inItemId, @NotNull String outItemId, int count) {
+        if (count <= 0) return true;
+        if (inItemId.isEmpty() || "none".equalsIgnoreCase(inItemId)) return true;
+
+        if (!canConsumeItemKey(inItemId, count)) return false;
+        if (!tryConsumeItemKey(inItemId, count)) return false;
+
+        if (outItemId.isEmpty() || "none".equalsIgnoreCase(outItemId) || outItemId.equalsIgnoreCase(inItemId)) {
+            return true;
+        }
+
+        int max = getMaxStackSizeForItemId(outItemId);
+        int remaining = count;
+        while (remaining > 0) {
+            int batch = Math.min(max, remaining);
+            tryOutputItemId(outItemId, batch);
+            remaining -= batch;
+        }
+
+        return true;
+    }
 
     protected boolean hasFuelAvailableForNextTick() {
         IFissionFuelRodType fuelType = getFuelRodForConsumption();
@@ -316,6 +432,8 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
 
         int duration = Math.max(1, fuelType.getDurationTicks());
         int amountPerCycle = Math.max(0, fuelType.getAmountPerCycle());
+
+        if (amountPerCycle <= 0) return true;
 
         double totalPerCycle = amountPerCycle;
 
@@ -333,12 +451,21 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
 
         double perTick = totalPerCycle / duration;
 
+        String itemId = fuelType.getFuelKey();
+        if (itemId == null || itemId.isEmpty()) return false;
+
+        if (!canConsumeItemKey(itemId, 1)) {
+            return false;
+        }
+
         double next = fuelRemainder + perTick;
         int wouldConsume = (int) Math.floor(next);
 
-        if (wouldConsume <= 0) return true; //
+        if (wouldConsume <= 0) {
+            return true;
+        }
 
-        return canConsumeItemKey(fuelType.getFuelKey(), wouldConsume);
+        return canConsumeItemKey(itemId, wouldConsume);
     }
 
     protected boolean canConsumeMaterialFluid(Material mat, int mb) {
@@ -370,12 +497,8 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
                 this,
                 dummy,
                 IO.IN,
-                getRecipeLogic().getChanceCaches()
-        ).isSuccess();
+                getRecipeLogic().getChanceCaches()).isSuccess();
     }
-
-
-
 
     protected boolean canConsumeItemKey(String itemId, int count) {
         if (count <= 0) return true;
@@ -416,12 +539,8 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
                 this,
                 dummy,
                 IO.IN,
-                getRecipeLogic().getChanceCaches()
-        ).isSuccess();
+                getRecipeLogic().getChanceCaches()).isSuccess();
     }
-
-
-
 
     /**
      * Default: run if formed and at least one rod is present.
@@ -440,9 +559,9 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
         try {
             Method m = this.getClass().getMethod("setActive", boolean.class);
             m.invoke(this, active);
-        } catch (Throwable ignored) {
-        }
+        } catch (Throwable ignored) {}
     }
+
     protected void heatTick() {
         if (getLevel() == null || getLevel().isClientSide) return;
         if (!isFormed()) return;
@@ -458,18 +577,14 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
         lastHeatRemovedPerTick = 0.0;
         lastGeneratedEUt = 0;
 
-        // Track continuous run for burn bonus
         if (running) {
             continuousBurnTicks++;
         } else {
             continuousBurnTicks = 0;
         }
 
-        // ---------
-        // HEAT ADD
-        // ---------
         if (running && !activeFuelRods.isEmpty()) {
-            // parallels still matter for scaling
+
             lastParallels = Math.max(1, computeParallels());
             applyParallelsToRecipeLogic(lastParallels);
 
@@ -477,55 +592,48 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
             heat += heatProduced;
             lastHeatGainedPerTick = heatProduced;
 
-            // fuel and other machine-driven IO only when actually burning
             tickFuelConsumptionMachineDriven(lastParallels);
             tickMachineOutputs(lastParallels);
         } else {
-            // keep parallels fresh for HUD even when idle
+
             lastParallels = Math.max(1, computeParallels());
 
-            // passive cooling (ambient) while not burning
             if (cfg().passiveCooling) {
                 heat -= cfg().idleHeatLoss;
             }
         }
 
-        // ---------
-        // COOLING (additive power; non-stacking drain)
-        // ---------
         int totalCooling = activeCoolers.stream()
                 .mapToInt(IFissionCoolerType::getCoolerTemperature)
                 .sum();
         lastProvidedCooling = totalCooling;
 
-        // Coolant is OPTIONAL for operation, but may be required for cooling to apply.
-        if (cfg().coolingRequiresCoolant && !activeCoolers.isEmpty()) {
-            // two-phase: check first, then drain
+        lastHasCoolant = true;
+
+        if (running && cfg().coolingRequiresCoolant && !activeCoolers.isEmpty()) {
             lastHasCoolant = canConsumeCoolantForThisTickMachineDriven();
             if (lastHasCoolant) {
                 lastHasCoolant = consumeCoolantForThisTickMachineDriven();
             }
-        } else {
-            lastHasCoolant = !activeCoolers.isEmpty();
-        }
+        } else if (cfg().coolingRequiresCoolant && !activeCoolers.isEmpty()) {}
 
         double removed = 0.0;
         if (!cfg().coolingRequiresCoolant || lastHasCoolant) {
-            // true additive cooling: remove up to totalCooling HU/t but never below minHeat
-            double aboveMin = Math.max(0.0, heat - cfg().minHeat);
-            removed = Math.min(aboveMin, (double) totalCooling);
-            heat -= removed;
+            if (running) {
+                double aboveMin = Math.max(0.0, heat - cfg().minHeat);
+                removed = Math.min(aboveMin, (double) totalCooling);
+                heat -= removed;
+            }
         }
         lastHeatRemovedPerTick = removed;
 
         clampHeat();
 
-        // ---------
-        // POWER + MELTDOWN
-        // ---------
-        tickPowerGeneration(); // generates even while cooling down
+        tickPowerGeneration(running);
+
         tickMeltdown();
     }
+
     /**
      * Slow-burn reward multiplier.
      * Ramps from 1.0 to 1.0 + (burnBonusMaxPercent/100) over burnBonusRampSeconds.
@@ -541,11 +649,8 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
         return 1.0 + (maxPct / 100.0) * t;
     }
 
-
-
     protected void clampHeat() {
         if (heat < cfg().minHeat) heat = cfg().minHeat;
-        if (heat > cfg().maxHeatClamp) heat = cfg().maxHeatClamp;
     }
 
     protected int computeParallels() {
@@ -569,7 +674,7 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
     protected double computeHeatProducedPerTick(int parallels) {
         double base = 0.0;
         try {
-            // optional config field; default to 0 if not present
+
             base = Math.max(0.0, cfg().baseHeatPerTick);
         } catch (Throwable ignored) {}
 
@@ -584,28 +689,24 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
 
         double p = Math.max(1.0, parallels);
 
-        // "slow burn" bonus (ramps while running)
         double burn = getBurnMultiplier();
 
         return (base + (rods * moderatorMult)) * p * burn;
     }
 
-
     /**
      * Steam machines should override this to do nothing.
      */
-    protected void tickPowerGeneration() {
+    protected void tickPowerGeneration(boolean running) {
         var cfg = cfg();
 
-        // Activity term: while running, base power comes from heat production (throughput),
-        // not stored heat (which can be zero if cooling matches production).
-        double activity = 0.0;
+        double activity;
 
-        boolean burning = shouldRunReactor(); // or pass in `running` if you have it
-        if (burning && lastHeatGainedPerTick > 0.0) {
-            activity = lastHeatGainedPerTick;           // HU/t produced this tick
+        if (running && lastHeatGainedPerTick > 0.0) {
+            activity = lastHeatGainedPerTick;
         } else {
-            activity = Math.max(0.0, heat);             // cooling-down phase uses stored heat
+
+            activity = Math.max(0.0, heat);
         }
 
         if (activity <= 0.0001) {
@@ -613,44 +714,40 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
             return;
         }
 
-        // Base EU from "how much reaction is happening"
         double baseEU = activity * cfg.euPerHeatUnit;
 
-        // Danger bonus: closer to maxSafeHeat => higher multiplier
-        // (Never drops below 1.0 so you always get power while burning.)
         double heatFrac = cfg.maxSafeHeat <= 0 ? 0.0 : (heat / cfg.maxSafeHeat);
-        heatFrac = Math.max(0.0, Math.min(1.5, heatFrac)); // allow slight overshoot without exploding math
+        heatFrac = Math.max(0.0, Math.min(1.5, heatFrac));
 
-        // Start giving danger bonus at, e.g., 50% heat. Tune via config if you want later.
         double start = Math.max(0.0, Math.min(0.99, cfg.powerStartFraction));
         double x = (heatFrac - start) / Math.max(1e-9, (1.0 - start));
         x = Math.max(0.0, Math.min(1.0, x));
 
-        // Convert x into a multiplier: 1.0 .. (1.0 + something)
-        // Uses your exponent to make the top end rewarding.
-        double dangerBonus = 1.0 + Math.pow(x, Math.max(0.01, cfg.powerCurveExponent)) * 1.5; // 1.0..2.5x
+        double dangerBonus = 1.0 + Math.pow(x, Math.max(0.01, cfg.powerCurveExponent)) * 1.5;
 
-        // Slow-burn bonus
-        double burnBonus = getBurnMultiplier(); // 1.0..1.6x if cfg is 60% cap
+        double burnBonus = getBurnMultiplier();
 
         double eut = baseEU * dangerBonus * burnBonus;
 
-        // Optional cap
-        if (cfg.maxGeneratedEUt > 0) eut = Math.min(eut, cfg.maxGeneratedEUt);
+        if (cfg.maxGeneratedEUt > 0) {
+            eut = Math.min(eut, cfg.maxGeneratedEUt);
+        }
 
         long out = (long) Math.floor(eut);
 
-        // Avoid the boring constant min clamp; only prevent rounding-to-zero.
-        if (out <= 0 && eut > 0.001) out = 1;
+        if (running && cfg.minGeneratedEUt > 0) {
+            out = Math.max(out, cfg.minGeneratedEUt);
+        }
+
+        if (out <= 0) {
+            lastGeneratedEUt = 0;
+            return;
+        }
 
         lastGeneratedEUt = out;
-
-        // Your codebase uses tryAddEnergy
         tryAddEnergy(out);
     }
 
-
-    // --- Jade / HUD helpers ---
     public int getMeltdownSecondsRemaining() {
         if (meltdownTimerTicks <= 0) return 0;
         return (int) Math.ceil(meltdownTimerTicks / 20.0);
@@ -660,19 +757,15 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
         return lastHeatGainedPerTick - lastHeatRemovedPerTick;
     }
 
-    // If you want Jade to show "running" exactly as your reactor logic evaluated it,
-// store it each tick. Add a field + getter:
     private boolean lastRunning = false;
 
     public boolean wasRunningLastTick() {
         return lastRunning;
     }
 
-
     protected void tryAddEnergy(long eu) {
         if (eu <= 0) return;
 
-        // 1) getEnergyContainer().addEnergy(long)
         try {
             Object container = this.getEnergyContainer();
             if (container != null) {
@@ -682,7 +775,6 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
             }
         } catch (Throwable ignored) {}
 
-        // 2) alternative: addEnergy(long) on machine
         try {
             Method add = this.getClass().getMethod("addEnergy", long.class);
             add.invoke(this, eu);
@@ -693,7 +785,6 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
      * Consumes coolant using dummy recipes so ME + fluid imports work.
      * Uses Forge Fluid IDs (not GT Materials).
      */
-
     @Getter
     @Persisted
     private boolean runningForHud = false;
@@ -722,7 +813,11 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
         if (mb <= 0) return true;
 
         FluidStack fs = resolveFluidStack(fluidId, mb);
-        if (fs.isEmpty()) return false;
+        if (fs.isEmpty()) {
+            // PhoenixAPI.LOGGER.warn("[FISSION][{}] Unknown fluid id '{}' (Forge registry lookup failed)", getPos(),
+            // fluidId);
+            return false;
+        }
 
         GTRecipe dummy = com.gregtechceu.gtceu.data.recipe.builder.GTRecipeBuilder.ofRaw()
                 .inputFluids(fs)
@@ -743,6 +838,28 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
         return new FluidStack(fluid, Math.max(1, mb));
     }
 
+    protected ItemStack resolveItemStack(@NotNull String itemId, int count) {
+        ResourceLocation rl = ResourceLocation.tryParse(itemId);
+        if (rl == null) return ItemStack.EMPTY;
+
+        var item = ForgeRegistries.ITEMS.getValue(rl);
+        if (item == null) return ItemStack.EMPTY;
+
+        return new ItemStack(item, Math.max(1, count));
+    }
+
+    protected int getMaxStackSizeForItemId(@NotNull String itemId) {
+        ResourceLocation rl = ResourceLocation.tryParse(itemId);
+        if (rl == null) return 64;
+        Item item = ForgeRegistries.ITEMS.getValue(rl);
+        if (item == null || item == net.minecraft.world.item.Items.AIR) return 64;
+        try {
+            return Math.max(1, item.getMaxStackSize());
+        } catch (Throwable ignored) {
+            return 64;
+        }
+    }
+
     /**
      * COMPAT: If you haven't updated IFissionCoolerType yet, this bridges:
      * - preferred: getRequiredCoolantFluidId()
@@ -754,12 +871,41 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
             Object v = m.invoke(cooler);
             if (v instanceof String s) return s;
         } catch (Throwable ignored) {}
-        // fallback to existing string id
+
         try {
             return cooler.getRequiredCoolantMaterialId();
         } catch (Throwable ignored) {
             return "";
         }
+    }
+
+    protected String getFuelOutputItemIdCompat(IFissionFuelRodType rod) {
+        // Try a few likely method names so older/newer API versions can coexist.
+        for (String name : new String[] {
+                "getOutputFuelItemId",
+                "getDepletedFuelItemId",
+                "getSpentFuelItemId",
+                "getFuelProductItemId",
+                "getOutputItemId",
+                "getOutputKey"
+        }) {
+            try {
+                Method m = rod.getClass().getMethod(name);
+                Object v = m.invoke(rod);
+                if (v instanceof String s) return s;
+            } catch (Throwable ignored) {}
+        }
+
+        // Older interface might expose an item "key" for the product.
+        for (String name : new String[] { "getOutputFuelKey", "getDepletedFuelKey", "getSpentFuelKey" }) {
+            try {
+                Method m = rod.getClass().getMethod(name);
+                Object v = m.invoke(rod);
+                if (v instanceof String s) return s;
+            } catch (Throwable ignored) {}
+        }
+
+        return "";
     }
 
     protected @Nullable IFissionFuelRodType getFuelRodForConsumption() {
@@ -796,9 +942,23 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
         String itemId = getFuelItemIdCompat(fuelType);
         if (itemId.isEmpty()) return;
 
+        // If we cannot consume fuel, force overheat and STOP (don't try to output a byproduct).
         if (!tryConsumeItemId(itemId, toConsumeNow)) {
-            // No fuel => go unsafe so meltdown engages (your old behavior)
             heat = Math.max(heat, cfg().maxSafeHeat + 1.0);
+            return;
+        }
+
+        // Output spent/depleted fuel as an item (hot-coolant analogue).
+        String outItemId = getFuelOutputItemIdCompat(fuelType);
+        if (!outItemId.isEmpty() && !"none".equalsIgnoreCase(outItemId) && !outItemId.equalsIgnoreCase(itemId)) {
+
+            int max = getMaxStackSizeForItemId(outItemId);
+            int remaining = toConsumeNow;
+            while (remaining > 0) {
+                int batch = Math.min(max, remaining);
+                tryOutputItemId(outItemId, batch);
+                remaining -= batch;
+            }
         }
     }
 
@@ -834,7 +994,7 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
             Object v = m.invoke(rod);
             if (v instanceof String s) return s;
         } catch (Throwable ignored) {}
-        // fallback
+
         try {
             return rod.getFuelKey();
         } catch (Throwable ignored) {
@@ -846,15 +1006,24 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
      * Default: no “product” outputs other than EU.
      * Steam machines override to output steam (and possibly consume water).
      */
-    protected void tickMachineOutputs(int parallels) {
-        // no-op by default
-    }
+    protected void tickMachineOutputs(int parallels) {}
 
     protected void tickMeltdown() {
-        // If you ever reach the hard ceiling, you explode immediately.
-        // (Heat is clamped, so reaching this means you "touched the hatch".)
         if (heat >= cfg().maxHeatClamp) {
-            doMeltdown();
+            heat = cfg().maxHeatClamp;
+
+            int minTicks = (int) Math.max(1, Math.floor(cfg().meltdown.minGraceSeconds * 20.0));
+            meltdownTimerMax = minTicks;
+
+            if (meltdownTimerTicks < 0) {
+                meltdownTimerTicks = minTicks;
+            } else if (meltdownTimerTicks > 0) {
+                meltdownTimerTicks -= 1;
+            }
+
+            if (meltdownTimerTicks == 0) {
+                doMeltdown();
+            }
             return;
         }
 
@@ -884,11 +1053,11 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
 
         if (meltdownTimerTicks < 0) {
             meltdownTimerTicks = meltdownTimerMax;
-        } else {
+        } else if (meltdownTimerTicks > 0) {
             meltdownTimerTicks -= 1;
         }
 
-        if (meltdownTimerTicks <= 0) {
+        if (meltdownTimerTicks == 0) {
             doMeltdown();
         }
     }
@@ -919,8 +1088,7 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
             if (cfg().explosion.destructiveExplosion) {
                 int radius = (int) Math.min(
                         Math.ceil(power / 4.0),
-                        cfg().explosion.maxDestructiveRadius
-                );
+                        cfg().explosion.maxDestructiveRadius);
 
                 BlockPos center = getPos();
 
@@ -936,7 +1104,6 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
                 }
             }
 
-            // Invalidate after the explosion. (Guard prevents recursion / double-explosion.)
             this.onStructureInvalid();
         }
 
@@ -946,12 +1113,12 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
 
         meltdownInProgress = false;
     }
+
     protected boolean canConsumeCoolantForThisTickMachineDriven() {
-        var cfg = cfg();
+        var cfg = PhoenixConfigs.INSTANCE.fission;
         if (!cfg.coolingRequiresCoolant) return true;
         if (activeCoolers.isEmpty()) return true;
 
-        // If additive is disabled, only drain the primary cooler.
         if (!cfg.coolantUsageAdditive) {
             IFissionCoolerType primary = primaryCoolerType;
             if (primary == null) return true;
@@ -959,35 +1126,40 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
             int mb = Math.max(0, primary.getCoolantPerTick());
             if (mb <= 0) return true;
 
-            String fluidId = getCoolerCoolantFluidIdCompat(primary);
-            if (fluidId.isEmpty()) return true;
+            String inId = primary.getInputCoolantFluidId();
+            if (inId.isEmpty() || "none".equalsIgnoreCase(inId)) return true;
 
-            return canConsumeFluidId(fluidId, mb);
+            return canConvertCoolant(inId, primary.getOutputCoolantFluidId(), mb);
         }
 
-        // Non-stacking drain:
-        // - group by coolant fluidId
-        // - demand is MAX mb/t among coolers using that coolant
-        Map<String, Integer> requiredMax = new HashMap<>();
+        Map<String, Integer> required = new HashMap<>();
+        Map<String, String> keyToIn = new HashMap<>();
+        Map<String, String> keyToOut = new HashMap<>();
+
         for (IFissionCoolerType c : activeCoolers) {
             int mb = Math.max(0, c.getCoolantPerTick());
             if (mb <= 0) continue;
 
-            String fluidId = getCoolerCoolantFluidIdCompat(c);
-            if (fluidId.isEmpty()) continue;
+            String inId = c.getInputCoolantFluidId();
+            if (inId.isEmpty() || "none".equalsIgnoreCase(inId)) continue;
 
-            requiredMax.merge(fluidId, mb, Math::max);
+            String outId = c.getOutputCoolantFluidId();
+            String key = inId + "->" + outId;
+
+            required.merge(key, mb, Integer::sum);
+            keyToIn.putIfAbsent(key, inId);
+            keyToOut.putIfAbsent(key, outId);
         }
 
-        for (var e : requiredMax.entrySet()) {
-            if (!canConsumeFluidId(e.getKey(), e.getValue())) return false;
+        for (var e : required.entrySet()) {
+            String key = e.getKey();
+            if (!canConvertCoolant(keyToIn.get(key), keyToOut.get(key), e.getValue())) return false;
         }
         return true;
     }
-
 
     protected boolean consumeCoolantForThisTickMachineDriven() {
-        var cfg = cfg();
+        var cfg = PhoenixConfigs.INSTANCE.fission;
         if (!cfg.coolingRequiresCoolant) return true;
         if (activeCoolers.isEmpty()) return true;
 
@@ -998,31 +1170,37 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
             int mb = Math.max(0, primary.getCoolantPerTick());
             if (mb <= 0) return true;
 
-            String fluidId = getCoolerCoolantFluidIdCompat(primary);
-            if (fluidId.isEmpty()) return true;
+            String inId = primary.getInputCoolantFluidId();
+            if (inId.isEmpty() || "none".equalsIgnoreCase(inId)) return true;
 
-            return tryConsumeFluidId(fluidId, mb);
+            return tryConvertCoolant(inId, primary.getOutputCoolantFluidId(), mb);
         }
 
-        // Non-stacking drain per coolant type (max usage per type)
-        Map<String, Integer> requiredMax = new HashMap<>();
+        Map<String, Integer> required = new HashMap<>();
+        Map<String, String> keyToIn = new HashMap<>();
+        Map<String, String> keyToOut = new HashMap<>();
+
         for (IFissionCoolerType c : activeCoolers) {
             int mb = Math.max(0, c.getCoolantPerTick());
             if (mb <= 0) continue;
 
-            String fluidId = getCoolerCoolantFluidIdCompat(c);
-            if (fluidId.isEmpty()) continue;
+            String inId = c.getInputCoolantFluidId();
+            if (inId.isEmpty() || "none".equalsIgnoreCase(inId)) continue;
 
-            requiredMax.merge(fluidId, mb, Math::max);
+            String outId = c.getOutputCoolantFluidId();
+            String key = inId + "->" + outId;
+
+            required.merge(key, mb, Integer::sum);
+            keyToIn.putIfAbsent(key, inId);
+            keyToOut.putIfAbsent(key, outId);
         }
 
-        for (var e : requiredMax.entrySet()) {
-            if (!tryConsumeFluidId(e.getKey(), e.getValue())) return false;
+        for (var e : required.entrySet()) {
+            String key = e.getKey();
+            if (!tryConvertCoolant(keyToIn.get(key), keyToOut.get(key), e.getValue())) return false;
         }
         return true;
     }
-
-
 
     public float getExplosionProgress() {
         if (meltdownTimerTicks < 0) return 1f;
@@ -1030,14 +1208,12 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
         return (float) meltdownTimerTicks / (float) meltdownTimerMax;
     }
 
-
-
     protected void applyParallelsToRecipeLogic(int parallels) {
         try {
             Object logic = this.getRecipeLogic();
             if (logic == null) return;
 
-            for (String name : new String[]{"setParallelLimit", "setMaxParallel", "setParallel"}) {
+            for (String name : new String[] { "setParallelLimit", "setMaxParallel", "setParallel" }) {
                 try {
                     Method m = logic.getClass().getMethod(name, int.class);
                     m.invoke(logic, parallels);
@@ -1056,10 +1232,10 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
         int sum = activeModerators.stream().mapToInt(IFissionModeratorType::getFuelDiscount).sum();
         return Math.min(sum, cfg().maxFuelDiscountPercent);
     }
+
     public static com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction recipeModifier(
-            com.gregtechceu.gtceu.api.machine.MetaMachine machine,
-            com.gregtechceu.gtceu.api.recipe.GTRecipe recipe
-    ) {
+                                                                                            com.gregtechceu.gtceu.api.machine.MetaMachine machine,
+                                                                                            com.gregtechceu.gtceu.api.recipe.GTRecipe recipe) {
         if (!(machine instanceof FissionWorkableElectricMultiblockMachine m))
             return com.gregtechceu.gtceu.api.recipe.modifier.RecipeModifier
                     .nullWrongType(FissionWorkableElectricMultiblockMachine.class, machine);
@@ -1088,6 +1264,21 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
         return b.build();
     }
 
+    /**
+     * COMPAT: output "hot" coolant fluid id.
+     * - preferred: getOutputCoolantFluidId() (new API)
+     * - fallback: same as input (no conversion)
+     */
+    protected String getCoolerOutputCoolantFluidIdCompat(IFissionCoolerType cooler) {
+        try {
+            Method m = cooler.getClass().getMethod("getOutputCoolantFluidId");
+            Object v = m.invoke(cooler);
+            if (v instanceof String s) return s;
+        } catch (Throwable ignored) {}
+
+        return getCoolerCoolantFluidIdCompat(cooler);
+    }
+
     @Override
     public void addDisplayText(@NotNull List<Component> textList) {
         super.addDisplayText(textList);
@@ -1098,32 +1289,40 @@ public class FissionWorkableElectricMultiblockMachine extends WorkableElectricMu
             return;
         }
 
-        textList.add(Component.literal(String.format("Heat: %.1f / %.1f", heat, cfg().maxSafeHeat))
-                .withStyle(s -> s.withColor(heat > cfg().maxSafeHeat ? 0xFF3333 : 0x33FF33)));
+        final var cfg = cfg();
 
+        final boolean overheating = heat > cfg.maxSafeHeat;
+        textList.add(Component.literal(String.format("Heat: %.1f / %.1f", heat, cfg.maxSafeHeat))
+                .withStyle(s -> s.withColor(overheating ? 0xFF3333 : 0x33FF33)));
+
+        textList.add(Component.literal("EU/t: " + lastGeneratedEUt));
         textList.add(Component.literal("Parallels: " + lastParallels));
-        textList.add(Component.literal("EU/t (current heat): " + lastGeneratedEUt));
 
-        String modName = primaryModeratorType != null ? primaryModeratorType.getName() : "None";
-        String coolerName = primaryCoolerType != null ? primaryCoolerType.getName() : "None";
-        String rodName = primaryFuelRodType != null ? primaryFuelRodType.getName() : "None";
+        textList.add(Component.literal("Cooling Capacity: " + lastProvidedCooling + " HU/t")
+                .withStyle(s -> s.withColor(0x55FFFF)));
+
+        final String rodName = (primaryFuelRodType != null) ? primaryFuelRodType.getName() : "None";
+        final String modName = (primaryModeratorType != null) ? primaryModeratorType.getName() : "None";
+        final String coolerName = (primaryCoolerType != null) ? primaryCoolerType.getName() : "None";
 
         textList.add(Component.literal("Fuel Rods: " + activeFuelRods.size() + " (Primary: " + rodName + ")"));
         textList.add(Component.literal("Moderators: " + activeModerators.size() + " (Primary: " + modName + ")"));
         textList.add(Component.literal("Coolers: " + activeCoolers.size() + " (Primary: " + coolerName + ")"));
 
-        textList.add(Component.literal("Moderator EU Boost: " + getModeratorEUBoostClamped() + "%"));
-        textList.add(Component.literal("Moderator Fuel Discount: " + getModeratorFuelDiscountClamped() + "%"));
+        int euBoost = getModeratorEUBoostClamped();
+        int fuelDiscount = getModeratorFuelDiscountClamped();
+        textList.add(Component.literal("EU Boost: " + euBoost + "%"));
+        textList.add(Component.literal("Fuel Discount: " + fuelDiscount + "%"));
 
-        textList.add(Component.literal("Coolant OK: " + lastHasCoolant)
+        textList.add(Component.literal("Coolant: " + (lastHasCoolant ? "OK" : "MISSING"))
                 .withStyle(s -> s.withColor(lastHasCoolant ? 0x33FF33 : 0xFF3333)));
 
         if (meltdownTimerTicks > 0) {
-            int seconds = getMeltdownSecondsRemaining();
-            textList.add(Component.literal("MELTDOWN IN: " + seconds + "s")
+            textList.add(Component.literal("MELTDOWN IN: " + getMeltdownSecondsRemaining() + "s")
                     .withStyle(s -> s.withColor(0xFFAA00)));
         }
     }
+
     protected void resolvePersistedComponents() {
         activeCoolers.clear();
         activeModerators.clear();

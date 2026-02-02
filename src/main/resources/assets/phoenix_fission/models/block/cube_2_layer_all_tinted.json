@@ -2,7 +2,8 @@
   "parent": "block/cube_all",
   "textures": {
     "bot_all": "#bot_all",
-    "top_all": "#top_all"
+    "top_all": "#top_all",
+    "particle": "#bot_all"
   },
   "elements": [
     {

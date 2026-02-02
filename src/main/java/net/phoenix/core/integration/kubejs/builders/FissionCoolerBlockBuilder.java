@@ -27,10 +27,17 @@ public class FissionCoolerBlockBuilder extends BlockBuilder {
     @Setter
     public transient int coolantUsagePerTick = 10;
 
+    /** INPUT coolant fluid id */
     @Setter
     @NotNull
     public transient String requiredCoolantMaterialId = "gtceu:distilled_water";
 
+    /** OUTPUT coolant fluid id (hot return). Defaults to same as input (no conversion). */
+    @Setter
+    @NotNull
+    public transient String outputCoolantFluidId = ""; // empty => same as input
+
+    /** Legacy hook only. Not used for IO/tint anymore. */
     @NotNull
     public transient Supplier<Material> material = () -> GTMaterials.NULL;
 
@@ -59,8 +66,10 @@ public class FissionCoolerBlockBuilder extends BlockBuilder {
 
     private class KjsCoolerType implements IFissionCoolerType, StringRepresentable {
 
-        private final ResourceLocation baseTextureLocation = new ResourceLocation(texture);
-        private final ResourceLocation maskTextureLocation = new ResourceLocation(maskTexture);
+        private final ResourceLocation baseTextureLocation = safeRL(texture,
+                new ResourceLocation("phoenix_fission", "block/fission/cooler/missing"));
+        private final ResourceLocation maskTextureLocation = safeRL(maskTexture,
+                new ResourceLocation("phoenix_fission", "block/fission/masks/cooler_mask"));
 
         @Override
         public @NotNull String getSerializedName() {
@@ -74,40 +83,50 @@ public class FissionCoolerBlockBuilder extends BlockBuilder {
 
         @Override
         public int getCoolerTemperature() {
-            return coolerTemperature;
+            return Math.max(0, coolerTemperature);
         }
 
         @Override
         public int getTier() {
-            return tier;
+            return Math.max(0, tier);
         }
 
         @Override
         public int getCoolantUsagePerTick() {
-            return coolantUsagePerTick;
+            return Math.max(0, coolantUsagePerTick);
+        }
+
+        /**
+         * Legacy interface name: now treated as INPUT coolant fluid id.
+         */
+        @Override
+        public @NotNull String getRequiredCoolantMaterialId() {
+            return requiredCoolantMaterialId == null ? "" : requiredCoolantMaterialId;
         }
 
         @Override
-        public @NotNull String getRequiredCoolantMaterialId() {
-            return requiredCoolantMaterialId;
+        public @NotNull String getOutputCoolantFluidId() {
+            String in = getRequiredCoolantMaterialId();
+            String out = outputCoolantFluidId == null ? "" : outputCoolantFluidId;
+            return out.isEmpty() ? in : out;
         }
 
         @Override
         public @NotNull Material getMaterial() {
-            return material.get();
+            // keep interface satisfied, but don’t rely on it for IO/tint
+            return GTMaterials.NULL;
         }
 
         @Override
         public @NotNull ResourceLocation getTexture() {
-            // Base texture for bot_all
             return baseTextureLocation;
         }
 
-        /** OPTIONAL: if you add this to IFissionCoolerType, tint becomes unified */
+        @Override
         public int getTintColor() {
             if (tintColor != -1) return tintColor;
 
-            return switch (tier) {
+            return switch (getTier()) {
                 case 1 -> 0xFF7DE7FF; // cyan-ish
                 case 2 -> 0xFFB07CFF; // purple-ish
                 case 3 -> 0xFFFFD27D; // gold-ish
@@ -116,7 +135,7 @@ public class FissionCoolerBlockBuilder extends BlockBuilder {
             };
         }
 
-        /** NEW: overlay mask for tinted model (if you wire it) */
+        /** Not in IFissionCoolerType. Only useful if your model/color code explicitly reads it. */
         public @NotNull ResourceLocation getMaskTexture() {
             return maskTextureLocation;
         }
@@ -128,5 +147,11 @@ public class FissionCoolerBlockBuilder extends BlockBuilder {
         FissionCoolerBlock result = new FissionCoolerBlock(this.createProperties(), type);
         PhoenixAPI.FISSION_COOLERS.put(type, () -> result);
         return result;
+    }
+
+    private static ResourceLocation safeRL(String s, ResourceLocation fallback) {
+        if (s == null || s.isEmpty()) return fallback;
+        ResourceLocation rl = ResourceLocation.tryParse(s);
+        return rl != null ? rl : fallback;
     }
 }

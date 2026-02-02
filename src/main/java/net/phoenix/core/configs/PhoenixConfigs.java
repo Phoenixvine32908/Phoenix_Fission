@@ -109,7 +109,7 @@ public class PhoenixConfigs {
         public int maxParallels = 64;
 
         // =========================
-        // Power model (your choice)
+        // Power model
         // =========================
 
         @Configurable
@@ -133,6 +133,10 @@ public class PhoenixConfigs {
         public boolean fuelUsageScalesWithRodCount = true;
 
         @Configurable
+        @Configurable.Comment("If true, blanket usage/output is additive across ALL blankets. If false, only the primary blanket is processed.")
+        public boolean blanketUsageAdditive = true;
+
+        @Configurable
         @Configurable.Comment("Clamp for total fuel discount percent from moderators.")
         public int maxFuelDiscountPercent = 90;
 
@@ -150,7 +154,7 @@ public class PhoenixConfigs {
 
         @Configurable
         @Configurable.Comment("If true, coolant usage is additive across all coolers. If false, uses primary cooler only.")
-        public boolean coolantUsageAdditive = true;
+        public boolean coolantUsageAdditive = false;
 
         @Configurable
         @Configurable.Comment("Minimum EU/t produced while running (prevents 0). Set 0 to allow 0.")
