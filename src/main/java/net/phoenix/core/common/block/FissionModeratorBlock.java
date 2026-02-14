@@ -1,6 +1,8 @@
 package net.phoenix.core.common.block;
 
 import com.gregtechceu.gtceu.api.block.ActiveBlock;
+import com.gregtechceu.gtceu.api.data.chemical.material.Material;
+import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
 import net.minecraft.ChatFormatting;
@@ -25,7 +27,6 @@ import javax.annotation.ParametersAreNonnullByDefault;
 @ParametersAreNonnullByDefault
 public class FissionModeratorBlock extends ActiveBlock {
 
-    /** Needed for tinting + introspection */
     private final IFissionModeratorType moderatorType;
 
     public FissionModeratorBlock(Properties properties, IFissionModeratorType moderatorType) {
@@ -72,8 +73,6 @@ public class FissionModeratorBlock extends ActiveBlock {
         @NotNull
         private final ResourceLocation texture;
 
-        /** Per-type tint (ARGB) */
-        @Getter
         private final int tintColor;
 
         FissionModeratorTypes(String name, int EUBoost, int fuelDiscount, int tier,
@@ -97,8 +96,8 @@ public class FissionModeratorBlock extends ActiveBlock {
         }
 
         @Override
-        public com.gregtechceu.gtceu.api.data.chemical.material.Material getMaterial() {
-            return com.gregtechceu.gtceu.common.data.GTMaterials.NULL;
+        public Material getMaterial() {
+            return GTMaterials.NULL;
         }
     }
 }

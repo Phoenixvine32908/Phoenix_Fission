@@ -15,6 +15,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 @Accessors(chain = true, fluent = true)
@@ -38,7 +39,6 @@ public class FissionBlanketRodBlockBuilder extends BlockBuilder {
     @Setter
     public transient String maskTexture = "phoenix_fission:block/fission/masks/blanket_mask";
 
-    /** Key can be: GT material id OR item id OR fluid id */
     @Setter
     public transient String inputKey = "gtceu:uranium_238_nugget";
     @Setter
@@ -95,19 +95,13 @@ public class FissionBlanketRodBlockBuilder extends BlockBuilder {
         }
 
         @Override
-        public @NotNull String getOutputKey() {
-            return outputKey == null ? "" : outputKey;
+        public List<BlanketOutput> getOutputs() {
+            return List.of();
         }
 
         @Override
         public int getTier() {
             return Math.max(0, tier);
-        }
-
-        @Override
-        public @NotNull Material getMaterial() {
-            Material m = material.get();
-            return (m == null) ? GTMaterials.NULL : m;
         }
 
         @Override

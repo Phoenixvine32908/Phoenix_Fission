@@ -2,8 +2,6 @@ package net.phoenix.core.integration.kubejs.recipe;
 
 import com.gregtechceu.gtceu.integration.kjs.recipe.GTRecipeSchema;
 
-import net.phoenix.core.common.data.recipeConditions.FluidInHatchCondition;
-
 import dev.latvian.mods.kubejs.recipe.schema.RecipeSchema;
 import lombok.experimental.Accessors;
 
@@ -15,9 +13,6 @@ public interface PhoenixRecipeSchema {
     @Accessors(chain = true, fluent = true)
     class PhoenixRecipeJS extends GTRecipeSchema.GTRecipeJS {
 
-        public GTRecipeJS fluidInHatch(String fluidId) {
-            return addCondition(FluidInHatchCondition.of(fluidId));
-        }
     }
 
     /**

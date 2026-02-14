@@ -6,8 +6,6 @@ import com.gregtechceu.gtceu.api.addon.events.KJSRecipeKeyEvent;
 import com.gregtechceu.gtceu.api.registry.registrate.GTRegistrate;
 
 import net.minecraft.data.recipes.FinishedRecipe;
-import net.phoenix.core.common.data.PhoenixFissionMachineRecipes;
-import net.phoenix.core.common.data.materials.PhoenixFissionElements;
 
 import java.util.function.Consumer;
 
@@ -33,13 +31,13 @@ public class PhoenixGTAddon implements IGTAddon {
 
     @Override
     public void addRecipes(Consumer<FinishedRecipe> provider) {
-        PhoenixFissionMachineRecipes.init(provider);
+        // PhoenixFissionMachineRecipes.init(provider);
     }
 
     @Override
     public void registerElements() {
         IGTAddon.super.registerElements();
-        PhoenixFissionElements.init();
+        // PhoenixFissionElements.init();
     }
 
     @Override

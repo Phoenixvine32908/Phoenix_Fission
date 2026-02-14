@@ -2,8 +2,6 @@ package net.phoenix.core.common.block;
 
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.block.ActiveBlock;
-import com.gregtechceu.gtceu.api.data.chemical.material.Material;
-import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
 import net.minecraft.ChatFormatting;
@@ -57,6 +55,11 @@ public class FissionFuelRodBlock extends ActiveBlock {
         tooltip.add(Component.translatable("phoenix.fission.fuel_required", fuelName)
                 .withStyle(ChatFormatting.AQUA));
 
+        Component outputName = getRegistryDisplayName(fuelRodType.getOutputKey());
+
+        tooltip.add(Component.translatable("phoenix.fission.depleted_fuel", outputName)
+                .withStyle(ChatFormatting.DARK_GREEN));
+
         tooltip.add(Component.translatable("phoenix.fission.heat_production",
                 Component.literal(String.valueOf(fuelRodType.getBaseHeatProduction()))
                         .withStyle(ChatFormatting.RED))
@@ -70,9 +73,14 @@ public class FissionFuelRodBlock extends ActiveBlock {
                         .withStyle(ChatFormatting.GOLD))
                 .withStyle(ChatFormatting.GRAY));
 
-        tooltip.add(Component.translatable("phoenix.fission.depleted_fuel",
-                Component.literal(String.valueOf(fuelRodType.getOutputKey()))
-                        .withStyle(ChatFormatting.WHITE))
+        // NEW: neutron bias (affects blanket output distribution)
+        int bias = 0;
+        try {
+            bias = fuelRodType.getNeutronBias();
+        } catch (Throwable ignored) {}
+        tooltip.add(Component.translatable("phoenix.fission.neutron_bias",
+                Component.literal((bias >= 0 ? "+" : "") + bias + "%")
+                        .withStyle(bias >= 0 ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.BLUE))
                 .withStyle(ChatFormatting.GRAY));
 
         tooltip.add(Component.translatable("gtceu.tooltip.tier",
@@ -105,12 +113,14 @@ public class FissionFuelRodBlock extends ActiveBlock {
 
     public enum FissionFuelRodTypes implements StringRepresentable, IFissionFuelRodType {
 
+        // Example: uranium fuel rod has neutral bias
         URANIUM("uranium_fuel_rod",
                 500, 1,
                 1200, 1,
                 "gtceu:uranium_nugget",
                 "gtceu:plutonium_nugget",
-                0xFF7DE7FF);
+                0xFF7DE7FF,
+                4);
 
         @Getter
         @NotNull
@@ -133,12 +143,17 @@ public class FissionFuelRodBlock extends ActiveBlock {
         @NotNull
         private final String outputKey;
 
+        /** NEW: shifts blanket breeding distribution toward higher instability outputs */
+        @Getter
+        private final int neutronBias;
+
         /** Case-by-case ARGB tint. Packdevs choose this. */
         @Getter
         private final int tintColor;
 
         FissionFuelRodTypes(String name, int heat, int tier, int duration, int amount,
-                            String fuelKey, String outputKey, int tintColor) {
+                            String fuelKey, String outputKey, int tintColor,
+                            int neutronBias) {
             this.name = name;
             this.baseHeatProduction = heat;
             this.tier = tier;
@@ -148,6 +163,7 @@ public class FissionFuelRodBlock extends ActiveBlock {
             this.texture = PhoenixFission.id("block/fission/fuel_rod/" + name);
             this.tintColor = tintColor;
             this.outputKey = outputKey;
+            this.neutronBias = neutronBias;
         }
 
         @Override
@@ -158,11 +174,6 @@ public class FissionFuelRodBlock extends ActiveBlock {
         @Override
         public int getTintColor() {
             return tintColor;
-        }
-
-        @Override
-        public Material getMaterial() {
-            return GTMaterials.NULL;
         }
     }
 }

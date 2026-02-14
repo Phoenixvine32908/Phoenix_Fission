@@ -17,6 +17,8 @@ public interface IFissionCoolerType {
     @NotNull
     String getName();
 
+    int getTier();
+
     int getCoolerTemperature();
 
     @NotNull
@@ -33,7 +35,7 @@ public interface IFissionCoolerType {
     }
 
     /**
-     * How much coolant is consumed per tick (mB/t).
+     * Defines how much coolant is consumed per tick (mB/t).
      */
     int getCoolantUsagePerTick();
 
@@ -46,8 +48,6 @@ public interface IFissionCoolerType {
     }
 
     Material getMaterial();
-
-    int getTier();
 
     ResourceLocation getTexture();
 

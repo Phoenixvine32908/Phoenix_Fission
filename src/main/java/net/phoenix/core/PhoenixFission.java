@@ -1,15 +1,12 @@
 package net.phoenix.core;
 
 import com.gregtechceu.gtceu.api.GTCEuAPI;
-import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 import com.gregtechceu.gtceu.api.data.chemical.material.event.MaterialEvent;
 import com.gregtechceu.gtceu.api.data.chemical.material.event.MaterialRegistryEvent;
 import com.gregtechceu.gtceu.api.data.chemical.material.event.PostMaterialEvent;
-import com.gregtechceu.gtceu.api.fluids.store.FluidStorageKeys;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.condition.RecipeConditionType;
-import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.api.registry.registrate.GTRegistrate;
 import com.gregtechceu.gtceu.api.sound.SoundEntry;
 import com.gregtechceu.gtceu.common.data.GTCreativeModeTabs;
@@ -18,7 +15,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
-import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
@@ -35,11 +31,8 @@ import net.phoenix.core.common.data.PhoenixFissionRecipeTypes;
 import net.phoenix.core.common.data.item.PhoenixFissionItems;
 import net.phoenix.core.common.data.materials.PhoenixFissionMaterials;
 import net.phoenix.core.common.data.materials.PhoenixMaterialFlags;
-import net.phoenix.core.common.data.recipeConditions.FluidInHatchCondition;
 import net.phoenix.core.common.machine.PhoenixFissionMachines;
-import net.phoenix.core.common.registry.PhoenixFissionEntities;
 import net.phoenix.core.configs.PhoenixConfigs;
-import net.phoenix.core.datagen.PhoenixDatagen;
 
 import com.tterrag.registrate.util.entry.RegistryEntry;
 import org.apache.logging.log4j.LogManager;
@@ -61,7 +54,7 @@ public class PhoenixFission {
                                     REGISTRATE))
                             .title(REGISTRATE.addLang("itemGroup", PhoenixFission.id("creative_tab"),
                                     "Phoenix's Fission"))
-                            .icon(PhoenixFissionMachines.PRESSURIZED_FISSION_REACTOR::asStack)
+                            .icon(PhoenixFissionBlocks.FISSILE_REACTION_SAFE_CASING::asStack)
                             .build())
             .register();
 
@@ -87,19 +80,14 @@ public class PhoenixFission {
     public static void init() {
         PhoenixConfigs.init();
         REGISTRATE.registerRegistrate();
-        PhoenixFissionEntities.init();
+        // PhoenixFissionEntities.init();
         PhoenixFissionBlocks.init();
         PhoenixFissionItems.init();
         PhoenixMaterialFlags.init();
-        PhoenixDatagen.init();
+        // PhoenixDatagen.init();
     }
 
-    public void registerConditions(GTCEuAPI.RegisterEvent<String, RecipeConditionType<?>> event) {
-        FluidInHatchCondition.TYPE = GTRegistries.RECIPE_CONDITIONS.register("plasma_temp_condition",
-                new RecipeConditionType<>(
-                        FluidInHatchCondition::new,
-                        FluidInHatchCondition.CODEC));
-    }
+    public void registerConditions(GTCEuAPI.RegisterEvent<String, RecipeConditionType<?>> event) {}
 
     @SubscribeEvent
     public void commonSetup(final FMLCommonSetupEvent event) {
@@ -142,9 +130,5 @@ public class PhoenixFission {
 
     public static ResourceLocation id(String path) {
         return new ResourceLocation(MOD_ID, path);
-    }
-
-    public static Fluid plasma(Material material) {
-        return material.getFluid(FluidStorageKeys.PLASMA, 1).getFluid();
     }
 }

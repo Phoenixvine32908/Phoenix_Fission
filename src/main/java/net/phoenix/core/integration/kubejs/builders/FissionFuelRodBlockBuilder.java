@@ -29,15 +29,25 @@ public class FissionFuelRodBlockBuilder extends BlockBuilder {
     @Setter
     public transient int amountPerCycle = 1;
 
+    /** NEW: shifts blanket breeding distribution (percent). */
+    @Setter
+    public transient int neutronBias = 0;
+
     /**
      * Fuel item registry id (Forge item id).
      * Example: "gtceu:uranium_235_nugget"
-     *
-     * (Legacy name kept: getFuelKey()).
      */
     @Setter
     @NotNull
     public transient String fuelKey = "gtceu:uranium_235_nugget";
+
+    /**
+     * NEW: depleted output registry id (Forge item id OR fluid id if you want).
+     * Example: "gtceu:depleted_uranium_235_nugget"
+     */
+    @Setter
+    @NotNull
+    public transient String outputKey = "";
 
     /** Legacy hook only. Don’t rely on it for IO/tint anymore. */
     @NotNull
@@ -72,11 +82,14 @@ public class FissionFuelRodBlockBuilder extends BlockBuilder {
 
     private class KjsFuelRodType implements IFissionFuelRodType, StringRepresentable {
 
-        private final ResourceLocation baseTextureLocation = safeRL(texture,
+        private final ResourceLocation baseTextureLocation = safeRL(
+                texture,
                 new ResourceLocation("phoenix_fission", "block/fission/fuel_rod/missing"));
-        private final ResourceLocation maskTextureLocation = safeRL(maskTexture,
+        private final ResourceLocation maskTextureLocation = safeRL(
+                maskTexture,
                 new ResourceLocation("phoenix_fission", "block/fission/masks/fuel_rod_mask"));
-        private final ResourceLocation activeMaskTextureLocation = safeRL(activeMaskTexture,
+        private final ResourceLocation activeMaskTextureLocation = safeRL(
+                activeMaskTexture,
                 new ResourceLocation("phoenix_fission", "block/fission/masks/fuel_rod_mask_active"));
 
         @Override
@@ -94,17 +107,9 @@ public class FissionFuelRodBlockBuilder extends BlockBuilder {
             return Math.max(0, baseHeatProduction);
         }
 
-        /**
-         * Legacy method name – but now treated as an ITEM registry id.
-         */
         @Override
-        public @NotNull String getFuelKey() {
-            return fuelKey == null ? "" : fuelKey;
-        }
-
-        @Override
-        public @NotNull String getOutputKey() {
-            return "";
+        public int getTier() {
+            return Math.max(0, tier);
         }
 
         @Override
@@ -118,14 +123,19 @@ public class FissionFuelRodBlockBuilder extends BlockBuilder {
         }
 
         @Override
-        public int getTier() {
-            return Math.max(0, tier);
+        public int getNeutronBias() {
+            // If you want clamp: return clamp(neutronBias, -100, 100);
+            return neutronBias;
         }
 
         @Override
-        public @NotNull Material getMaterial() {
-            // keep interface satisfied, but don’t rely on it for IO/tint
-            return GTMaterials.NULL;
+        public @NotNull String getFuelKey() {
+            return fuelKey == null ? "" : fuelKey;
+        }
+
+        @Override
+        public @NotNull String getOutputKey() {
+            return outputKey == null ? "" : outputKey;
         }
 
         @Override
@@ -134,10 +144,10 @@ public class FissionFuelRodBlockBuilder extends BlockBuilder {
         }
 
         /**
-         * If IFissionFuelRodType has getTintColor(), add @Override.
-         * If it doesn’t, your color handler must explicitly read it (instance check/reflection),
-         * or you should add it to the interface like coolers.
+         * RECOMMENDED: add getTintColor() to IFissionFuelRodType so this is a real override.
+         * If you don't, your color handler must cast to read it.
          */
+        @Override
         public int getTintColor() {
             if (tintColor != -1) return tintColor;
 
@@ -173,5 +183,10 @@ public class FissionFuelRodBlockBuilder extends BlockBuilder {
         if (s == null || s.isEmpty()) return fallback;
         ResourceLocation rl = ResourceLocation.tryParse(s);
         return rl != null ? rl : fallback;
+    }
+
+    @SuppressWarnings("unused")
+    private static int clamp(int v, int min, int max) {
+        return Math.max(min, Math.min(max, v));
     }
 }

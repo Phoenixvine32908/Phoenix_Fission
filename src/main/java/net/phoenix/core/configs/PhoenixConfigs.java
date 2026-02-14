@@ -168,15 +168,27 @@ public class PhoenixConfigs {
         @Configurable.Comment("Heat fraction of maxSafeHeat where generation begins. 0.0 = always, 0.1 = starts at 10% of maxSafeHeat.")
         public double powerStartFraction = 0.0;
 
-        // =========================
-        // Meltdown model
-        // =========================
-
         @Configurable
         public MeltdownConfigs meltdown = new MeltdownConfigs();
 
         @Configurable
         public ExplosionConfigs explosion = new ExplosionConfigs();
+
+        @Configurable
+        @Configurable.Comment("If true, all fuel rods in the multiblock must be the same tier.")
+        public boolean restrictFuelRodTier = true;
+
+        @Configurable
+        @Configurable.Comment("If true, all coolers in the multiblock must be the same tier.")
+        public boolean restrictCoolerTier = true;
+
+        @Configurable
+        @Configurable.Comment("If >= 0, all fuel rods must be exactly this tier. Set to -1 to disable.")
+        public int requiredFuelRodTier = -1;
+
+        @Configurable
+        @Configurable.Comment("If >= 0, all coolers must be exactly this tier. Set to -1 to disable.")
+        public int requiredCoolerTier = -1;
     }
 
     public static class MeltdownConfigs {

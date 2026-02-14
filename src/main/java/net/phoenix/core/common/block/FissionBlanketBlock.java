@@ -1,7 +1,6 @@
 package net.phoenix.core.common.block;
 
 import com.gregtechceu.gtceu.api.block.ActiveBlock;
-import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
 import net.minecraft.ChatFormatting;
@@ -12,6 +11,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.BlockGetter;
 import net.phoenix.core.api.block.IFissionBlanketType;
+import net.phoenix.core.api.block.IFissionBlanketType.BlanketOutput;
 
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -25,21 +25,17 @@ import javax.annotation.ParametersAreNonnullByDefault;
 @ParametersAreNonnullByDefault
 public class FissionBlanketBlock extends ActiveBlock {
 
-    /**
-     * Needed for tinting (BlockColor/ItemColor) and general introspection.
-     */
+    /** Needed for tinting + introspection */
     private final IFissionBlanketType blanketType;
 
-    public FissionBlanketBlock(Properties props, IFissionBlanketType type) {
-        super(props);
-        this.blanketType = type;
+    public FissionBlanketBlock(Properties properties, IFissionBlanketType blanketType) {
+        super(properties);
+        this.blanketType = blanketType;
     }
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable BlockGetter level,
                                 List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.literal("The heart of breeding fissile materials."));
-
         if (!GTUtil.isShiftDown()) {
             tooltip.add(Component.literal("Hold §fShift§7 for details")
                     .withStyle(ChatFormatting.GRAY));
@@ -47,12 +43,32 @@ public class FissionBlanketBlock extends ActiveBlock {
         }
 
         Component inputName = FissionFuelRodBlock.getRegistryDisplayName(blanketType.getInputKey());
-        Component outputName = FissionFuelRodBlock.getRegistryDisplayName(blanketType.getOutputKey());
-
         tooltip.add(Component.translatable("phoenix.fission.blanket_input", inputName)
                 .withStyle(ChatFormatting.LIGHT_PURPLE));
-        tooltip.add(Component.translatable("phoenix.fission.blanket_output", outputName)
+
+        // NEW: show distribution of outputs instead of a single output key
+        tooltip.add(Component.translatable("phoenix.fission.blanket_outputs")
                 .withStyle(ChatFormatting.GOLD));
+
+        List<BlanketOutput> outs = blanketType.getOutputs();
+        if (outs == null || outs.isEmpty()) {
+            tooltip.add(Component.literal("• (none)")
+                    .withStyle(ChatFormatting.DARK_GRAY));
+        } else {
+            // show up to 5 lines so tooltips don't get huge
+            int shown = 0;
+            for (BlanketOutput o : outs) {
+                if (o == null) continue;
+                if (shown++ >= 5) break;
+
+                Component outName = FissionFuelRodBlock.getRegistryDisplayName(o.key());
+                tooltip.add(Component.literal("• ")
+                        .append(outName)
+                        .append(Component.literal("  w=" + o.weight() + "  inst=" + o.instability())
+                                .withStyle(ChatFormatting.DARK_GRAY))
+                        .withStyle(ChatFormatting.GRAY));
+            }
+        }
 
         double seconds = blanketType.getDurationTicks() / 20.0;
         tooltip.add(Component.translatable(
@@ -69,13 +85,18 @@ public class FissionBlanketBlock extends ActiveBlock {
         PLUTONIUM_BREEDER("plutonium_breeder",
                 2, 2400, 1,
                 "gtceu:uranium_238_nugget",
-                "gtceu:plutonium_nugget",
+                List.of(
+                        new BlanketOutput("gtceu:plutonium_nugget", 70, 1),
+                        new BlanketOutput("gtceu:plutonium_241_nugget", 20, 3),
+                        new BlanketOutput("gtceu:plutonium_238_nugget", 10, 4)),
                 0xFFB07CFF),
 
         THORIUM_BREEDER("thorium_breeder",
                 1, 240, 1,
                 "gtceu:uranium_235_nugget",
-                "gtceu:plutonium_nugget",
+                List.of(
+                        new BlanketOutput("gtceu:plutonium_nugget", 85, 1),
+                        new BlanketOutput("gtceu:plutonium_241_nugget", 15, 3)),
                 0xFFFFD27D);
 
         @Getter
@@ -90,25 +111,28 @@ public class FissionBlanketBlock extends ActiveBlock {
         @Getter
         @NotNull
         private final String inputKey;
+
+        /** NEW: distribution outputs */
         @Getter
         @NotNull
-        private final String outputKey;
+        private final List<BlanketOutput> outputs;
+
         @Getter
         @NotNull
         private final ResourceLocation texture;
 
-        /** Case-by-case ARGB tint. Packdevs choose this. */
+        /** Per-type tint (ARGB) */
         @Getter
         private final int tintColor;
 
         BreederBlanketTypes(String name, int tier, int duration, int amount,
-                            String in, String out, int tintColor) {
+                            String in, List<BlanketOutput> outs, int tintColor) {
             this.name = name;
             this.tier = tier;
             this.durationTicks = duration;
             this.amountPerCycle = amount;
             this.inputKey = in;
-            this.outputKey = out;
+            this.outputs = outs;
             this.texture = new ResourceLocation("phoenix_fission", "block/blanket/" + name);
             this.tintColor = tintColor;
         }
@@ -121,11 +145,6 @@ public class FissionBlanketBlock extends ActiveBlock {
         @Override
         public int getTintColor() {
             return tintColor;
-        }
-
-        @Override
-        public Material getMaterial() {
-            return null;
         }
     }
 }
