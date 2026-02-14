@@ -12,6 +12,18 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.phoenix.core.PhoenixFission;
+import net.phoenix.core.api.block.IFissionBlanketType;
+import net.phoenix.core.common.machine.multiblock.BreederWorkableElectricMultiblockMachine;
+import net.phoenix.core.common.machine.multiblock.FissionWorkableElectricMultiblockMachine;
+
+import snownee.jade.api.BlockAccessor;
+import snownee.jade.api.IBlockComponentProvider;
+import snownee.jade.api.IServerDataProvider;
+import snownee.jade.api.ITooltip;
+import snownee.jade.api.config.IPluginConfig;
 
 public class FissionMachineProvider implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
 
@@ -255,5 +267,3 @@ public class FissionMachineProvider implements IBlockComponentProvider, IServerD
         return UID;
     }
 }
-
-*/

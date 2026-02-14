@@ -18,6 +18,13 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.BlockHitResult;
 import net.phoenix.core.common.block.entity.NukePrimedEntity;
+import net.phoenix.core.common.registry.PhoenixFissionEntities;
+import net.phoenix.core.configs.PhoenixConfigs;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class NukeBlock extends Block {
 
@@ -82,5 +89,3 @@ public class NukeBlock extends Block {
         return InteractionResult.PASS;
     }
 }
-
-*/

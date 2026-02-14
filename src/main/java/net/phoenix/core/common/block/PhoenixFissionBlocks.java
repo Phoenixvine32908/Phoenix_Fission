@@ -38,22 +38,20 @@ public class PhoenixFissionBlocks {
                 .build()
                 .register();
     }
-    /*
-     * public static final BlockEntry<NukeBlock> NUKE_BLOCK = REGISTRATE
-     * .block("nuke", NukeBlock::new)
-     * .initialProperties(() -> Blocks.TNT)
-     * .properties(p -> p.isValidSpawn((state, level, pos, ent) -> false))
-     * .blockstate((ctx, prov) -> prov.simpleBlock(ctx.getEntry(),
-     * prov.models().cubeBottomTop(
-     * ctx.getName(),
-     * PhoenixFission.id("block/nuke_side"),
-     * PhoenixFission.id("block/nuke_bottom"),
-     * PhoenixFission.id("block/nuke_top"))))
-     * .item(BlockItem::new)
-     * .build()
-     * .register();
-     * 
-     */
+
+    public static final BlockEntry<NukeBlock> NUKE_BLOCK = REGISTRATE
+            .block("nuke", NukeBlock::new)
+            .initialProperties(() -> Blocks.TNT)
+            .properties(p -> p.isValidSpawn((state, level, pos, ent) -> false))
+            .blockstate((ctx, prov) -> prov.simpleBlock(ctx.getEntry(),
+                    prov.models().cubeBottomTop(
+                            ctx.getName(),
+                            PhoenixFission.id("block/nuke_side"),
+                            PhoenixFission.id("block/nuke_bottom"),
+                            PhoenixFission.id("block/nuke_top"))))
+            .item(BlockItem::new)
+            .build()
+            .register();
 
     public static final BlockEntry<FissionCoolerBlock> COOLER_BASIC = createCoolerBlock(
             FissionCoolerBlock.FissionCoolerTypes.COOLER_BASIC);
